@@ -23,6 +23,7 @@ build/
 *.tsbuildinfo
 
 # Development/Planning
+claude-config-context/
 templates/
 IMPLEMENTATION_PLAN.md
 TODO.md
