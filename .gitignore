@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+*.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Development/Planning
+claude-config-context/
+templates/
+IMPLEMENTATION_PLAN.md
+TODO.md
+NOTES.md
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

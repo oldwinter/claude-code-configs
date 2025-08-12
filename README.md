@@ -21,129 +21,177 @@ This repository serves as an **educational reference** for developers looking to
 ## 📁 Repository Structure
 
 ```text
-.claude/
-├── agents/          # 15 specialized AI agents (~15,000 lines)
-├── commands/        # 7 custom workflow commands
-├── hooks/          # 2 automation scripts
-└── settings.json   # Central configuration hub
+memory-mcp-server/     # MCP server with memory & vector search
+├── .claude/
+│   ├── agents/        # 15 specialized AI agents
+│   ├── commands/      # 7 custom workflow commands
+│   ├── hooks/         # 2 automation scripts
+│   └── settings.json  # Central configuration
+├── CLAUDE.md          # MCP development guide
+└── README.md          # Setup documentation
+
+nextjs-15/             # Complete Next.js 15 configuration
+├── .claude/
+│   ├── agents/        # 11 Next.js-specific agents
+│   ├── commands/      # 6 workflow commands
+│   ├── hooks/         # Validation & formatting
+│   └── settings.json
+├── CLAUDE.md          # Next.js 15 best practices
+└── README.md          # Setup guide
+
+# 🚧 Coming Soon:
+vercel-ai-sdk/         # Vercel AI SDK configuration
+drizzle/               # Drizzle ORM configuration
+zod/                   # Zod validation configuration
+shadcn/                # shadcn/ui components configuration
+tailwindcss/           # TailwindCSS utility-first styling
+# ... and many more!
 ```
 
-## 🤖 Specialized Agents
+## 🎨 Claude Config CLI (Coming Soon!)
 
-This configuration includes **15 expert agents**, each with deep domain knowledge and specific capabilities:
-
-### Core Development
-
-- **`code-reviewer`** - Comprehensive code review with security focus
-- **`debugger`** - Systematic debugging and root cause analysis
-- **`test-runner`** - Automated testing with MCP protocol validation
-
-### MCP Protocol Experts
-
-- **`mcp-protocol-expert`** - Protocol debugging and compliance validation
-- **`mcp-sdk-builder`** - SDK implementation patterns
-- **`mcp-transport-expert`** - Transport layers (stdio, HTTP, SSE, WebSocket)
-- **`mcp-types-expert`** - TypeScript type system and Zod schemas
-
-### Database & Vector Search
-
-- **`neon-drizzle-expert`** - Neon PostgreSQL with Drizzle ORM
-- **`pgvector-advanced`** - Advanced pgvector v0.8.0 features
-- **`vector-search-expert`** - Semantic search and embeddings
-
-### Memory & Architecture
-
-- **`memory-architecture`** - Database design and indexing strategies
-- **`memory-lifecycle`** - Consolidation and expiration management
-- **`memory-validator`** - Data integrity and validation
-- **`companion-architecture`** - Multi-tenant AI companion systems
-- **`production-deployment`** - HTTPS deployment with Kubernetes
-
-## 🔧 Custom Commands
-
-Streamline complex workflows with these custom commands:
-
-### Development Workflow
+We're developing a powerful CLI tool that will generate optimal Claude Code configurations tailored to your specific tech stack:
 
 ```bash
-/setup quick       # Quick project setup
-/setup full        # Complete environment with all dependencies
-/setup database    # Database-focused initialization
+# Interactive configuration generator
+npx create-claude-config
+
+# Quick setup with options
+npx create-claude-config --lang typescript --framework nextjs --deps "drizzle,zod,tailwind"
 ```
 
-### Testing & Review
+The CLI will:
+
+- 🎯 Analyze your project's dependencies and structure
+- 🤖 Generate specialized agents for your tech stack
+- ⚙️ Create custom commands for your workflow
+- 🔧 Set up appropriate hooks and permissions
+- 📚 Include relevant CLAUDE.md documentation
+
+## 🎯 Available Configurations
+
+### Memory MCP Server Configuration
+
+A production-grade configuration for building MCP servers with memory persistence and vector search:
+
+- **15 Specialized Agents** for MCP, database, and memory systems
+- **7 Custom Commands** for development workflows
+- **2 Automation Hooks** for TypeScript and logging
+- **Optimized for:** PostgreSQL 17, pgvector, Drizzle ORM, MCP SDK
+
+[View Memory MCP Server Details →](./memory-mcp-server/README.md)
+
+## 🎯 Framework-Specific Configurations
+
+### Next.js 15 Configuration
+
+A complete Claude Code configuration tailored for Next.js 15 development, including:
+
+#### Specialized Next.js Agents (11 total)
+
+**Core Development:**
+
+- **`nextjs-app-router`** - App Router routing patterns and best practices
+- **`nextjs-server-components`** - Server/Client component optimization
+- **`nextjs-server-actions`** - Forms, mutations, and progressive enhancement
+- **`nextjs-data-fetching`** - Caching strategies and streaming
+- **`nextjs-performance`** - Bundle analysis and Core Web Vitals
+
+**Infrastructure & Quality:**
+
+- **`nextjs-testing`** - Jest, Vitest, Playwright setup
+- **`nextjs-deployment`** - Docker, Vercel, AWS deployment
+- **`nextjs-migration`** - Pages Router to App Router migration
+- **`nextjs-security`** - Authentication, CSP, OWASP compliance
+- **`nextjs-debugging`** - React DevTools and troubleshooting
+- **`nextjs-typescript`** - Type safety and error resolution
+
+#### Next.js Commands (6 total)
 
 ```bash
-/test             # Generate comprehensive test suites
-/review           # Security-focused code review
-/explain          # Context-aware code explanation
+/create-page [route]          # Generate page with loading/error boundaries
+/create-server-action [name]  # Create type-safe Server Actions
+/optimize-components          # Analyze component boundaries
+/setup-testing [framework]    # Configure testing framework
+/analyze-performance          # Generate performance report
+/migrate-to-app-router        # Migrate from Pages Router
 ```
 
-### Operations & Debugging
+#### Key Features
+
+- **React 19 & Async Request APIs** - Full support for Next.js 15 breaking changes
+- **Server Components First** - Optimized for minimal client JavaScript
+- **Intelligent Validation** - Pre-commit hooks for Next.js patterns
+- **Best Practices Enforcement** - Automated checks for common mistakes
+- **Complete Documentation** - CLAUDE.md with Next.js 15 patterns
+
+## 🛠️ Featured Commands
+
+### Memory MCP Server Commands
 
 ```bash
+/setup quick       # Quick MCP project setup
+/setup full        # Complete environment with dependencies
+/setup database    # PostgreSQL & pgvector initialization
 /mcp-debug        # Debug MCP protocol issues
 /memory-ops       # Test memory CRUD operations
-/perf-monitor     # Performance profiling
 ```
 
-## ⚡ Automation Hooks
+### Next.js 15 Commands
 
-### TypeScript Development Hook
-
-Automatically triggered on file modifications:
-
-- ✅ Type checking with `tsc --noEmit`
-- ✨ Prettier formatting
-- 🔧 ESLint fixing
-- 🧪 Test execution for test files
-- 📁 Smart filtering (skips node_modules, build dirs)
-
-### Bash Command Logging
-
-- 📝 Logs all executed commands for audit trails
-- ⏱️ Timestamps for debugging
-
-## 🛡️ Security Configuration
-
-### Permission Model
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Read", "Grep", "Glob", "LS",
-      "Bash(npm test:*)",
-      "Write(**/*.ts)"
-    ],
-    "deny": [
-      "Read(./.env)",
-      "Bash(rm -rf:*)",
-      "Bash(git push:*)"
-    ]
-  }
-}
+```bash
+/create-page              # Generate page with boundaries
+/create-server-action     # Create type-safe Server Actions
+/optimize-components      # Analyze component boundaries
+/analyze-performance      # Generate performance report
+/migrate-to-app-router    # Migrate from Pages Router
 ```
 
-### Key Security Features
+## ⚡ Shared Features
 
-- 🔒 Whitelist approach for commands
-- 🚫 Prevents access to sensitive files
-- ✅ Scoped write permissions
-- 🛡️ Git operation safety
+### Automation Hooks
+
+Both configurations include intelligent hooks:
+
+- **TypeScript Development** - Auto type-check, format, lint
+- **Command Logging** - Audit trail with timestamps
+- **Smart Filtering** - Skip node_modules, build directories
+- **Test Automation** - Run tests on file changes
+
+### Security Best Practices
+
+All configurations enforce:
+
+- 🔒 **Whitelist approach** for commands
+- 🚫 **Protected sensitive files** (.env, secrets)
+- ✅ **Scoped write permissions** by file type
+- 🛡️ **Safe git operations** (no force push)
+- 🔐 **Input validation** with Zod schemas
 
 ## 💡 Use Cases & Examples
 
-### 1. Building a Memory MCP Server
+### 1. Memory MCP Server Development
 
-Use the memory-focused agents to:
+Use the memory-mcp-server configuration for:
 
-- Design vector-indexed database schemas
-- Implement semantic search with pgvector
-- Handle memory lifecycle and consolidation
-- Deploy with production monitoring
+- Building MCP servers with persistent memory storage
+- Implementing vector search with pgvector and OpenAI embeddings
+- Creating multi-tenant AI companion systems
+- Setting up production PostgreSQL with Neon
+- Deploying with Docker and Kubernetes
 
-### 2. Production Deployment Pipeline
+### 2. Next.js 15 Application Development
+
+Use the nextjs-15 configuration for:
+
+- Setting up new Next.js 15 projects with best practices
+- Migrating from Pages Router to App Router
+- Implementing Server Components and Server Actions
+- Optimizing performance and Core Web Vitals
+- Setting up comprehensive testing
+- Deploying to Vercel, Docker, or AWS
+
+### 3. Production Deployment Pipeline
 
 Leverage deployment agents for:
 
@@ -163,25 +211,37 @@ Build multi-tenant companion systems with:
 
 ## 🚀 Getting Started
 
-### 1. Study the Configuration Structure
+### 1. Choose Your Configuration
 
 ```bash
-# Explore the agents
-ls -la .claude/agents/
+# For MCP server development
+cp -r memory-mcp-server/.claude your-project/
+cp memory-mcp-server/CLAUDE.md your-project/
 
-# Review custom commands
-cat .claude/commands/setup.md
-
-# Examine hooks
-cat .claude/hooks/typescript-dev.sh
+# For Next.js 15 development
+cp -r nextjs-15/.claude your-project/
+cp nextjs-15/CLAUDE.md your-project/
 ```
 
-### 2. Adapt to Your Workflow
+### 2. Explore Available Configurations
 
-1. **Choose relevant agents** for your domain
-2. **Customize commands** for your tech stack
-3. **Configure permissions** based on your security needs
+```bash
+# Memory MCP Server configuration
+ls -la memory-mcp-server/.claude/
+cat memory-mcp-server/README.md
+
+# Next.js 15 configuration
+ls -la nextjs-15/.claude/
+cat nextjs-15/README.md
+```
+
+### 3. Adapt to Your Workflow
+
+1. **Choose a base configuration** that matches your project type
+2. **Customize agents** for your specific needs
+3. **Configure permissions** based on your security requirements
 4. **Set up hooks** for your development workflow
+5. **Merge configurations** if working with multiple frameworks
 
 ### 3. Key Configuration Patterns
 
@@ -211,15 +271,25 @@ cat .claude/hooks/typescript-dev.sh
 
 ## 📊 Configuration Statistics
 
+### Memory MCP Server Configuration
+
 - **15 Specialized Agents** - ~15,000 lines of domain expertise
-- **7 Custom Commands** - Covering full development lifecycle
+- **7 Custom Commands** - Full development lifecycle coverage
 - **2 Automation Hooks** - TypeScript and logging automation
-- **109 Lines of Settings** - Fine-tuned configuration
-- **Version-Locked Stack** - Production-tested dependencies
+- **Focus Areas:** MCP protocol, vector search, memory systems, production deployment
+
+### Next.js 15 Configuration
+
+- **11 Next.js Agents** - Framework-specific expertise
+- **6 Workflow Commands** - Next.js development automation
+- **Intelligent Hooks** - Validation and formatting
+- **Focus Areas:** App Router, Server Components, performance, testing
 
 ## 🔗 Technology Stack
 
 This configuration is optimized for:
+
+### General Development
 
 - **TypeScript** & Node.js development
 - **PostgreSQL 17** with **Neon** serverless
@@ -227,6 +297,14 @@ This configuration is optimized for:
 - **pgvector v0.8.0** for vector similarity search
 - **MCP SDK** for protocol implementation
 - **Docker** & **Kubernetes** for deployment
+
+### Framework Support
+
+- **Next.js 15** with App Router
+- **React 19** with Server Components
+- **Tailwind CSS** for styling
+- **Server Actions** for mutations
+- **Turbopack** for faster builds
 
 ## 📈 Benefits of This Configuration
 
@@ -239,12 +317,43 @@ This configuration is optimized for:
 
 ## 🤝 Contributing
 
-While this is primarily a reference repository, suggestions for improvements are welcome. Consider:
+**We welcome open-source contributions!** This repository thrives on community input to support more frameworks and use cases.
 
-- Additional agent specializations
-- New workflow commands
-- Enhanced automation hooks
-- Security improvements
+### How to Contribute
+
+1. **Add a New Framework Configuration:**
+   - Create a new directory (e.g., `vercel-ai-sdk/`, `drizzle/`, `zod/`)
+   - Include `.claude/` directory with agents, commands, hooks, and settings
+   - Add a comprehensive `CLAUDE.md` with framework-specific best practices
+   - Create a `README.md` documenting the configuration
+
+2. **Improve Existing Configurations:**
+   - Add specialized agents for new use cases
+   - Create workflow commands for common tasks
+   - Enhance automation hooks
+   - Improve security patterns
+
+3. **Help Build the CLI Tool:**
+   - Contribute to the configuration generator logic
+   - Add framework detection capabilities
+   - Create configuration templates
+   - Improve the interactive setup experience
+
+### Priority Frameworks We Need
+
+- **Vercel AI SDK** - Streaming, function calling, provider management
+- **Drizzle ORM** - Schema management, migrations, type safety
+- **Zod** - Validation patterns, schema generation
+- **shadcn/ui** - Component library patterns, theming, accessibility
+- **TailwindCSS** - Utility classes, custom plugins, design systems
+
+### Contribution Guidelines
+
+- Follow the existing structure and patterns
+- Include comprehensive documentation
+- Test configurations thoroughly
+- Add examples of real-world usage
+- Ensure security best practices
 
 ## 📝 License
 
@@ -270,3 +379,7 @@ This configuration reference is provided as-is for educational purposes. Adapt a
 **Built with ❤️ for the Claude Code community**
 
 *Transform your AI-assisted development with production-grade configurations*
+
+🌟 **Star this repo** if you find it helpful!  
+🐛 **Open an issue** for bugs or suggestions  
+🚀 **Submit a PR** to add your framework configuration
