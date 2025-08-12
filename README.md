@@ -38,7 +38,35 @@ nextjs-15/             # Complete Next.js 15 configuration
 │   └── settings.json
 ├── CLAUDE.md          # Next.js 15 best practices
 └── README.md          # Setup guide
+
+# 🚧 Coming Soon:
+vercel-ai-sdk/         # Vercel AI SDK configuration
+drizzle/               # Drizzle ORM configuration
+zod/                   # Zod validation configuration
+shadcn/                # shadcn/ui components configuration
+tailwindcss/           # TailwindCSS utility-first styling
+# ... and many more!
 ```
+
+## 🎨 Claude Config CLI (Coming Soon!)
+
+We're developing a powerful CLI tool that will generate optimal Claude Code configurations tailored to your specific tech stack:
+
+```bash
+# Interactive configuration generator
+npx create-claude-config
+
+# Quick setup with options
+npx create-claude-config --lang typescript --framework nextjs --deps "drizzle,zod,tailwind"
+```
+
+The CLI will:
+
+- 🎯 Analyze your project's dependencies and structure
+- 🤖 Generate specialized agents for your tech stack
+- ⚙️ Create custom commands for your workflow
+- 🔧 Set up appropriate hooks and permissions
+- 📚 Include relevant CLAUDE.md documentation
 
 ## 🎯 Available Configurations
 
@@ -289,12 +317,43 @@ This configuration is optimized for:
 
 ## 🤝 Contributing
 
-While this is primarily a reference repository, suggestions for improvements are welcome. Consider:
+**We welcome open-source contributions!** This repository thrives on community input to support more frameworks and use cases.
 
-- Additional agent specializations
-- New workflow commands
-- Enhanced automation hooks
-- Security improvements
+### How to Contribute
+
+1. **Add a New Framework Configuration:**
+   - Create a new directory (e.g., `vercel-ai-sdk/`, `drizzle/`, `zod/`)
+   - Include `.claude/` directory with agents, commands, hooks, and settings
+   - Add a comprehensive `CLAUDE.md` with framework-specific best practices
+   - Create a `README.md` documenting the configuration
+
+2. **Improve Existing Configurations:**
+   - Add specialized agents for new use cases
+   - Create workflow commands for common tasks
+   - Enhance automation hooks
+   - Improve security patterns
+
+3. **Help Build the CLI Tool:**
+   - Contribute to the configuration generator logic
+   - Add framework detection capabilities
+   - Create configuration templates
+   - Improve the interactive setup experience
+
+### Priority Frameworks We Need
+
+- **Vercel AI SDK** - Streaming, function calling, provider management
+- **Drizzle ORM** - Schema management, migrations, type safety
+- **Zod** - Validation patterns, schema generation
+- **shadcn/ui** - Component library patterns, theming, accessibility
+- **TailwindCSS** - Utility classes, custom plugins, design systems
+
+### Contribution Guidelines
+
+- Follow the existing structure and patterns
+- Include comprehensive documentation
+- Test configurations thoroughly
+- Add examples of real-world usage
+- Ensure security best practices
 
 ## 📝 License
 
@@ -320,3 +379,7 @@ This configuration reference is provided as-is for educational purposes. Adapt a
 **Built with ❤️ for the Claude Code community**
 
 *Transform your AI-assisted development with production-grade configurations*
+
+🌟 **Star this repo** if you find it helpful!  
+🐛 **Open an issue** for bugs or suggestions  
+🚀 **Submit a PR** to add your framework configuration
