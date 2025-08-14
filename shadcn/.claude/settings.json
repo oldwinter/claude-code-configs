@@ -1,0 +1,188 @@
+{
+  "name": "shadcn-ui-config",
+  "version": "1.0.0",
+  "description": "Comprehensive Claude Code configuration for shadcn/ui development",
+  "permissions": {
+    "allow": [
+      "Read(**/*)",
+      "Write(components/**/*)",
+      "Write(app/**/*)",
+      "Write(src/**/*)",
+      "Write(lib/**/*)",
+      "Write(styles/**/*)",
+      "Edit(**/*)",
+      "MultiEdit(**/*)",
+      "Grep(**/*)",
+      "Glob(**/*)",
+      "LS(**/*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm ci)",
+      "Bash(npx shadcn@latest:*)",
+      "Bash(npx shadcn-ui@latest:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+      "Bash(bun:*)",
+      "Bash(git:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node:*)",
+      "Bash(tsx:*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "TodoWrite(*)"
+    ],
+    "deny": [
+      "Read(node_modules/**)",
+      "Write(node_modules/**)",
+      "Edit(node_modules/**)",
+      "Read(**/*.env*)",
+      "Write(**/*.env*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(npm publish)",
+      "Bash(yarn publish)",
+      "Bash(pnpm publish)"
+    ]
+  },
+  "env": {
+    "SHADCN_STYLE": "new-york",
+    "SHADCN_RSC": "true",
+    "SHADCN_TSX": "true",
+    "SHADCN_CSS_VARIABLES": "true",
+    "SHADCN_TAILWIND_CONFIG": "tailwind.config.js",
+    "SHADCN_COMPONENTS_PATH": "@/components",
+    "SHADCN_UTILS_PATH": "@/lib/utils",
+    "SHADCN_BASE_COLOR": "zinc",
+    "SHADCN_ICON_LIBRARY": "lucide"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-components.sh",
+            "description": "Validate component structure before changes"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/format-tailwind.sh",
+            "description": "Format and sort Tailwind classes"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-accessibility.sh",
+            "description": "Check accessibility compliance"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/optimize-imports.sh",
+            "description": "Optimize and clean up imports"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "template": "🎨 shadcn/ui | {framework} | {theme} | {components}",
+    "variables": {
+      "framework": {
+        "type": "command",
+        "command": "if [ -f 'next.config.js' ] || [ -f 'next.config.mjs' ]; then echo 'Next.js'; elif [ -f 'vite.config.js' ] || [ -f 'vite.config.ts' ]; then echo 'Vite'; elif [ -f 'remix.config.js' ]; then echo 'Remix'; elif [ -f 'astro.config.mjs' ]; then echo 'Astro'; else echo 'React'; fi"
+      },
+      "theme": {
+        "type": "command",
+        "command": "if [ -f 'components.json' ]; then jq -r '.tailwind.baseColor // \"default\"' components.json 2>/dev/null || echo 'default'; else echo 'not-configured'; fi"
+      },
+      "components": {
+        "type": "command",
+        "command": "if [ -d 'components/ui' ]; then ls components/ui/*.tsx 2>/dev/null | wc -l | xargs echo -n && echo ' components'; elif [ -d 'src/components/ui' ]; then ls src/components/ui/*.tsx 2>/dev/null | wc -l | xargs echo -n && echo ' components'; else echo '0 components'; fi"
+      }
+    }
+  },
+  "codeRules": {
+    "typescript": {
+      "enabled": true,
+      "strict": true,
+      "noImplicitAny": true,
+      "strictNullChecks": true
+    },
+    "react": {
+      "version": "18",
+      "preferFunctionalComponents": true,
+      "useTypeScript": true,
+      "enforceHooks": true
+    },
+    "tailwind": {
+      "sortClasses": true,
+      "mergeClasses": true,
+      "preferShorthand": true,
+      "useCssVariables": true
+    },
+    "accessibility": {
+      "enforceAria": true,
+      "requireAltText": true,
+      "checkKeyboardNav": true,
+      "validateColorContrast": true
+    }
+  },
+  "componentPatterns": {
+    "useForwardRef": true,
+    "useDisplayName": true,
+    "useAsChild": true,
+    "useCVA": true,
+    "exportPattern": "named",
+    "fileNaming": "kebab-case",
+    "componentNaming": "PascalCase"
+  },
+  "importOrder": [
+    "react",
+    "next",
+    "@radix-ui",
+    "class-variance-authority",
+    "clsx",
+    "tailwind-merge",
+    "lucide-react",
+    "@/lib",
+    "@/components/ui",
+    "@/components",
+    ".",
+    ".."
+  ],
+  "testingFramework": {
+    "unit": "vitest",
+    "component": "@testing-library/react",
+    "e2e": "playwright",
+    "coverage": {
+      "statements": 80,
+      "branches": 75,
+      "functions": 80,
+      "lines": 80
+    }
+  },
+  "buildTools": {
+    "bundler": "auto-detect",
+    "packageManager": "auto-detect",
+    "formatter": "prettier",
+    "linter": "eslint"
+  }
+}

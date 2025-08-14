@@ -21,52 +21,91 @@ This repository serves as an **educational reference** for developers looking to
 ## 📁 Repository Structure
 
 ```text
-memory-mcp-server/     # MCP server with memory & vector search
-├── .claude/
-│   ├── agents/        # 15 specialized AI agents
-│   ├── commands/      # 7 custom workflow commands
-│   ├── hooks/         # 2 automation scripts
-│   └── settings.json  # Central configuration
-├── CLAUDE.md          # MCP development guide
-└── README.md          # Setup documentation
+claude-config-composer/  # 🆕 Dynamic config generator CLI tool
+├── src/
+│   ├── cli.ts          # Interactive CLI interface
+│   ├── parser/         # Config parsing logic
+│   ├── merger/         # Intelligent merging
+│   └── generator/      # .claude directory generation
+└── README.md           # Tool documentation
 
-nextjs-15/             # Complete Next.js 15 configuration
+memory-mcp-server/      # MCP server with memory & vector search
 ├── .claude/
-│   ├── agents/        # 11 Next.js-specific agents
-│   ├── commands/      # 6 workflow commands
-│   ├── hooks/         # Validation & formatting
+│   ├── agents/         # 15 specialized AI agents
+│   ├── commands/       # 7 custom workflow commands
+│   ├── hooks/          # 2 automation scripts
+│   └── settings.json   # Central configuration
+├── CLAUDE.md           # MCP development guide
+└── README.md           # Setup documentation
+
+nextjs-15/              # Complete Next.js 15 configuration
+├── .claude/
+│   ├── agents/         # 11 Next.js-specific agents
+│   ├── commands/       # 6 workflow commands
+│   ├── hooks/          # Validation & formatting
 │   └── settings.json
-├── CLAUDE.md          # Next.js 15 best practices
-└── README.md          # Setup guide
+├── CLAUDE.md           # Next.js 15 best practices
+└── README.md           # Setup guide
+
+shadcn/                 # 🆕 shadcn/ui configuration (complete)
+├── .claude/
+│   ├── agents/         # 11 UI/component agents
+│   ├── commands/       # 8 workflow commands
+│   ├── hooks/          # 4 validation scripts
+│   └── settings.json
+├── CLAUDE.md           # Component patterns guide
+└── README.md           # Setup documentation
 
 # 🚧 Coming Soon:
-vercel-ai-sdk/         # Vercel AI SDK configuration
-drizzle/               # Drizzle ORM configuration
-zod/                   # Zod validation configuration
-shadcn/                # shadcn/ui components configuration
-tailwindcss/           # TailwindCSS utility-first styling
+vercel-ai-sdk/          # Vercel AI SDK configuration
+drizzle/                # Drizzle ORM configuration
+zod/                    # Zod validation configuration
+tailwindcss/            # TailwindCSS utility-first styling
 # ... and many more!
 ```
 
-## 🎨 Claude Config CLI (Coming Soon!)
+## 🎨 Claude Config Composer - Now Available!
 
-We're developing a powerful CLI tool that will generate optimal Claude Code configurations tailored to your specific tech stack:
+**NEW:** Dynamically generate custom Claude Code configurations by combining multiple configs for your exact tech stack!
+
+### Quick Start
 
 ```bash
-# Interactive configuration generator
-npx create-claude-config
+# Clone and set up
+git clone https://github.com/Matt-Dionis/claude-code-configs.git
+cd claude-code-configs/claude-config-composer
+npm install
 
-# Quick setup with options
-npx create-claude-config --lang typescript --framework nextjs --deps "drizzle,zod,tailwind"
+# Interactive mode - choose your stack
+npm run dev
+
+# Generate preset configurations
+npm run dev generate nextjs-shadcn
+npm run dev generate nextjs-fullstack
 ```
 
-The CLI will:
+### Features
 
-- 🎯 Analyze your project's dependencies and structure
-- 🤖 Generate specialized agents for your tech stack
-- ⚙️ Create custom commands for your workflow
-- 🔧 Set up appropriate hooks and permissions
-- 📚 Include relevant CLAUDE.md documentation
+The Claude Config Composer:
+
+- 🎯 **Intelligently merges configurations** - Combines Next.js + shadcn + Prisma + more
+- 🤖 **Generates complete .claude directory** - Agents, commands, hooks, and settings
+- ⚙️ **Handles dependencies & conflicts** - Automatically resolves compatibility issues
+- 🔧 **Creates production-ready configs** - Full functionality from day one
+- 📚 **Preserves critical documentation** - Maintains framework-specific best practices
+
+### Example: Next.js 15 + shadcn/ui
+
+```bash
+npm run dev generate nextjs-shadcn
+```
+
+This generates a complete configuration with:
+- 21 specialized agents (combined from both configs)
+- 14 custom commands
+- Merged settings.json with all environment variables
+- Intelligent CLAUDE.md that preserves critical sections
+- Full .claude directory structure ready to use
 
 ## 🎯 Available Configurations
 
@@ -344,8 +383,10 @@ This configuration is optimized for:
 - **Vercel AI SDK** - Streaming, function calling, provider management
 - **Drizzle ORM** - Schema management, migrations, type safety
 - **Zod** - Validation patterns, schema generation
-- **shadcn/ui** - Component library patterns, theming, accessibility
 - **TailwindCSS** - Utility classes, custom plugins, design systems
+- **React 19** - Server Components, Suspense patterns
+- **Prisma** - Schema management, migrations, type safety
+- **tRPC** - End-to-end type safety, API patterns
 
 ### Contribution Guidelines
 
