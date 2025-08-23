@@ -112,8 +112,7 @@ describe('CLI Core Commands', () => {
     });
 
     it('should merge multiple configurations without conflicts', async () => {
-      execSync(`node ${CLI_PATH} nextjs-15 shadcn tailwindcss `, {
-        cwd: testProjectDir,
+      execSync(`node ${CLI_PATH} nextjs-15 shadcn tailwindcss --output "${testProjectDir}"`, {
         encoding: 'utf-8',
       });
 
