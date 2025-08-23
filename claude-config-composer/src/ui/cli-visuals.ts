@@ -4,7 +4,7 @@ import type {
   OptionalCFonts,
   OptionalNodeEmoji,
   OptionalBoxen,
-} from '../types/optional-deps.js';
+} from '../types/optional-deps';
 
 // Try to load optional visual dependencies with fallbacks
 let gradient: OptionalGradientString;

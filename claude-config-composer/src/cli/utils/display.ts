@@ -4,7 +4,7 @@ import type {
   OptionalCFonts,
   OptionalBoxen,
   OptionalNodeEmoji,
-} from '../../types/optional-deps.js';
+} from '../../types/optional-deps';
 
 // Try to load fancy visual dependencies if available
 let hasVisuals = false;

@@ -7,7 +7,7 @@ import type {
   OptionalCreateSpinner,
   OptionalCliProgress,
   OptionalTerminalLink,
-} from '../types/optional-deps.js';
+} from '../types/optional-deps';
 
 // Try to load optional visual dependencies with fallbacks
 let gradient: OptionalGradientString;

@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import type { Agent, Command, Hook, Settings } from '../parser/config-parser';
-import type { HooksConfig, StatusLine, HookEntry, HookCommand } from '../types/config.js';
+import type { HooksConfig, StatusLine, HookEntry, HookCommand } from '../types/config';
 
 /**
  * Handles the intelligent merging of configuration components from multiple sources

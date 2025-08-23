@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
 import { ConfigurationError, ErrorHandler, FileSystemError } from '../utils/error-handler';
-import type { HooksConfig, StatusLine, CodeRules, ComponentPatterns, ImportOrder, TestingFramework, BuildTools } from '../types/config.js';
+import type { HooksConfig, StatusLine, CodeRules, ComponentPatterns, ImportOrder, TestingFramework, BuildTools } from '../types/config';
 
 /**
  * Represents an AI agent configuration with specialized capabilities
