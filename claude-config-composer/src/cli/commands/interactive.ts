@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { ConfigGenerator } from '../../generator/config-generator';
 import { ConfigRegistry } from '../../registry/config-registry';
 import { ErrorHandler, GenerationError, RegistryError } from '../../utils/error-handler';
-import { loadEsmModule } from '../../utils/esm-loader';
+import { createSpinner } from '../../utils/simple-spinner';
 import { CONFIG_CATEGORIES, DisplayUtils } from '../utils/display';
 
 export interface InteractiveOptions {
@@ -22,8 +22,7 @@ export class InteractiveCommand {
       DisplayUtils.showTitle(useFancy);
 
       const registry = new ConfigRegistry();
-      const ora = await loadEsmModule<typeof import('ora').default>('ora');
-      const spinner = ora('Loading available configurations...').start();
+      const spinner = createSpinner('Loading available configurations...').start();
 
       try {
         await registry.initialize();

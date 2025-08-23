@@ -14,7 +14,7 @@ import { InputValidator } from '../../utils/input-validator';
 import { PathValidationError, PathValidator } from '../../utils/path-validator';
 import { BackupUtils } from '../utils/backup';
 import { DisplayUtils } from '../utils/display';
-import { loadEsmModule } from '../../utils/esm-loader';
+import { createSpinner } from '../../utils/simple-spinner';
 
 export interface GenerateOptions {
   output?: string;
@@ -43,8 +43,7 @@ export class GenerateCommand {
       }
 
       const registry = new ConfigRegistry();
-      const ora = await loadEsmModule<typeof import('ora').default>('ora');
-      const spinner = ora('Initializing registry...').start();
+      const spinner = createSpinner('Initializing registry...').start();
 
       try {
         await registry.initialize();

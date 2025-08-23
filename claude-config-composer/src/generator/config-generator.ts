@@ -11,9 +11,9 @@ import {
   GenerationError,
   ValidationError,
 } from '../utils/error-handler';
-import { loadEsmModule } from '../utils/esm-loader';
 import { InputValidator } from '../utils/input-validator';
 import { PathValidationError, PathValidator } from '../utils/path-validator';
+import { createSpinner, SimpleSpinner } from '../utils/simple-spinner';
 
 export class ConfigGenerator {
   private parser: ConfigParser;
@@ -75,8 +75,7 @@ export class ConfigGenerator {
     ];
 
     let currentStep = 0;
-    const ora = showProgress ? await loadEsmModule<typeof import('ora').default>('ora') : null;
-    const spinner = showProgress && ora ? ora(steps[currentStep]).start() : null;
+    const spinner = showProgress ? createSpinner(steps[currentStep]).start() : null;
 
     try {
       // Parse all configurations
