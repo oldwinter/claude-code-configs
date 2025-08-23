@@ -27,14 +27,18 @@ export class BackupUtils {
         // Log a warning but don't fail the entire operation
         const errorMessage = getErrorMessage(error);
         if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
-          console.warn(chalk.yellow(`⚠️  Warning: Cannot backup existing configuration (permission denied)`));
+          console.warn(
+            chalk.yellow(`⚠️  Warning: Cannot backup existing configuration (permission denied)`)
+          );
           console.warn(chalk.yellow(`   The existing .claude directory will be overwritten.`));
           // Try to remove it forcefully instead
           try {
             await fs.rm(claudeDir, { recursive: true, force: true });
           } catch {
             // If we can't remove it either, we'll let the generation fail naturally
-            console.warn(chalk.yellow(`   Unable to remove existing directory. Generation may fail.`));
+            console.warn(
+              chalk.yellow(`   Unable to remove existing directory. Generation may fail.`)
+            );
           }
           return;
         }
@@ -63,7 +67,9 @@ export class BackupUtils {
             await fs.rm(claudeDir, { recursive: true, force: true });
             console.log(chalk.green(`✅ Existing configuration removed`));
           } catch (removeError) {
-            console.warn(chalk.red(`❌ Cannot remove existing configuration: ${getErrorMessage(removeError)}`));
+            console.warn(
+              chalk.red(`❌ Cannot remove existing configuration: ${getErrorMessage(removeError)}`)
+            );
             throw new FileSystemError(
               `Cannot backup or remove existing configuration due to permission issues`,
               error instanceof Error ? error : new Error(String(error))

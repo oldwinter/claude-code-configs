@@ -220,7 +220,9 @@ export class GenerateCommand {
       // Validate the directory path before creating
       const validatedPath = PathValidator.validateOutputPath(dirPath);
       if (validatedPath) {
-        await fs.mkdir(validatedPath, { recursive: true });
+        // Resolve the path relative to current working directory
+        const resolvedPath = path.resolve(validatedPath);
+        await fs.mkdir(resolvedPath, { recursive: true });
       }
     } catch (error) {
       if (error instanceof PathValidationError) {

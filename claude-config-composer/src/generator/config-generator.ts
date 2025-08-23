@@ -29,19 +29,17 @@ export class ConfigGenerator {
     // The outputDir should already be validated and could be absolute or relative
     let resolvedOutputDir = outputDir || '.';
 
-    // If the path is already absolute, use it directly
-    // Otherwise, it's a relative path that should be used as-is
-    // This avoids calling path.resolve() which can fail in CI
+    // Resolve to absolute path for consistent directory creation
+    // This ensures both ensureDirectory and generateCompleteConfig use the same path
     let absoluteOutputDir: string;
-    
+
     if (path.isAbsolute(resolvedOutputDir)) {
       // Already absolute, just normalize it
       absoluteOutputDir = path.normalize(resolvedOutputDir);
     } else {
-      // For relative paths, just use them as-is
-      // The file system operations will resolve them relative to the current directory
-      // This avoids the problematic process.cwd() call in CI
-      absoluteOutputDir = resolvedOutputDir;
+      // For relative paths, resolve them to absolute paths
+      // This ensures consistency with ensureDirectory in generate.ts
+      absoluteOutputDir = path.resolve(resolvedOutputDir);
     }
 
     // Use absoluteOutputDir from here on

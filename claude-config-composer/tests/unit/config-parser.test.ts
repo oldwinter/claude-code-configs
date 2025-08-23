@@ -207,7 +207,7 @@ describe('ConfigParser Unit Tests', () => {
       // Simply verify the parser can be instantiated and used
       const parser = new ConfigParser();
       expect(parser).toBeDefined();
-      
+
       // Test that it can parse a known good configuration
       const result = await parser.parseConfigDirectory(testConfigPath);
       expect(result).toBeDefined();

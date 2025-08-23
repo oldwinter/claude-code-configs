@@ -66,9 +66,12 @@ describe('CLI Integration Tests', () => {
 
   describe('Configuration Generation', () => {
     it('should generate nextjs-15 configuration successfully', async () => {
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "${testDir}"`, {
-        encoding: 'utf8',
-      });
+      const result = execSync(
+        `node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "${testDir}"`,
+        {
+          encoding: 'utf8',
+        }
+      );
 
       expect(result).toContain('Configuration generated in');
 
@@ -101,9 +104,12 @@ describe('CLI Integration Tests', () => {
     });
 
     it('should generate shadcn configuration successfully', async () => {
-      const result = execSync(`node "${CLI_PATH}" shadcn --no-backup --no-gitignore --output "${testDir}"`, {
-        encoding: 'utf8',
-      });
+      const result = execSync(
+        `node "${CLI_PATH}" shadcn --no-backup --no-gitignore --output "${testDir}"`,
+        {
+          encoding: 'utf8',
+        }
+      );
 
       expect(result).toContain('Configuration generated in');
 
@@ -118,9 +124,12 @@ describe('CLI Integration Tests', () => {
     });
 
     it('should merge multiple configurations correctly', async () => {
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 shadcn --no-backup --no-gitignore --output "${testDir}"`, {
-        encoding: 'utf8',
-      });
+      const result = execSync(
+        `node "${CLI_PATH}" nextjs-15 shadcn --no-backup --no-gitignore --output "${testDir}"`,
+        {
+          encoding: 'utf8',
+        }
+      );
 
       expect(result).toContain('Configuration generated in');
 
@@ -139,7 +148,7 @@ describe('CLI Integration Tests', () => {
     it.skipIf(process.env.CI)('should handle backup of existing configuration', async () => {
       // Ensure test directory exists
       await fs.mkdir(testDir, { recursive: true });
-      
+
       // Create existing .claude directory
       const existingClaudeDir = path.join(testDir, '.claude');
       await fs.mkdir(existingClaudeDir, { recursive: true });
@@ -150,7 +159,7 @@ describe('CLI Integration Tests', () => {
       });
 
       expect(result).toContain('Configuration generated in');
-      
+
       // Check if backup was mentioned in output
       const backupMentioned = result.includes('Backing up') || result.includes('backup');
       if (backupMentioned) {
@@ -171,7 +180,7 @@ describe('CLI Integration Tests', () => {
       // Check that backup was created
       const files = await fs.readdir(testDir);
       const backupDir = files.find(f => f.includes('backup'));
-      
+
       // More detailed assertion for debugging
       if (!backupDir) {
         console.error('Expected backup directory not found. Files in directory:', files);
@@ -205,18 +214,24 @@ describe('CLI Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle invalid configuration names gracefully', () => {
       expect(() => {
-        execSync(`node "${CLI_PATH}" invalid-config --no-backup --no-gitignore --output "${testDir}"`, {
-          encoding: 'utf8',
-        });
+        execSync(
+          `node "${CLI_PATH}" invalid-config --no-backup --no-gitignore --output "${testDir}"`,
+          {
+            encoding: 'utf8',
+          }
+        );
       }).toThrow();
     });
 
     it('should handle permission errors gracefully', () => {
       // Test with an invalid path that will cause an error
       expect(() => {
-        execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "/root/no-permission"`, {
-          encoding: 'utf8',
-        });
+        execSync(
+          `node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "/root/no-permission"`,
+          {
+            encoding: 'utf8',
+          }
+        );
       }).toThrow();
     });
 
@@ -225,10 +240,10 @@ describe('CLI Integration Tests', () => {
       await fs.mkdir(testDir, { recursive: true });
       // Add small delay to ensure directory is ready
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Verify directory exists before running command
       expect(fsSync.existsSync(testDir)).toBe(true);
-      
+
       const result = execSync(
         `node "${CLI_PATH}" nextjs-15 --output custom-config --no-backup --no-gitignore`,
         {

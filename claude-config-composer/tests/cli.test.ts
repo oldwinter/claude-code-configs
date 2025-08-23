@@ -56,9 +56,12 @@ describe('CLI Core Commands', () => {
 
   describe('dry-run command', () => {
     it('should preview configuration without creating files', async () => {
-      const output = execSync(`node ${CLI_PATH} dry-run nextjs-15 shadcn --output "${testProjectDir}"`, {
-        encoding: 'utf-8',
-      });
+      const output = execSync(
+        `node ${CLI_PATH} dry-run nextjs-15 shadcn --output "${testProjectDir}"`,
+        {
+          encoding: 'utf-8',
+        }
+      );
 
       expect(output).toContain('Dry Run - Configuration Preview');
       expect(output).toContain('Target directory: current directory');
@@ -110,9 +113,12 @@ describe('CLI Core Commands', () => {
     });
 
     it('should merge multiple configurations without conflicts', async () => {
-      execSync(`node ${CLI_PATH} nextjs-15 shadcn tailwindcss --no-backup --output "${testProjectDir}"`, {
-        encoding: 'utf-8',
-      });
+      execSync(
+        `node ${CLI_PATH} nextjs-15 shadcn tailwindcss --no-backup --output "${testProjectDir}"`,
+        {
+          encoding: 'utf-8',
+        }
+      );
 
       const claudeMd = await fs.readFile(path.join(testProjectDir, 'CLAUDE.md'), 'utf-8');
       const settingsJson = JSON.parse(
