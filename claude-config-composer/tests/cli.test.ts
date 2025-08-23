@@ -56,9 +56,8 @@ describe('CLI Core Commands', () => {
 
   describe('dry-run command', () => {
     it('should preview configuration without creating files', async () => {
-      const output = execSync(`node ${CLI_PATH} dry-run nextjs-15 shadcn`, {
+      const output = execSync(`node ${CLI_PATH} dry-run nextjs-15 shadcn --output "${testProjectDir}"`, {
         encoding: 'utf-8',
-        cwd: testProjectDir,
       });
 
       expect(output).toContain('Dry Run - Configuration Preview');
@@ -80,9 +79,8 @@ describe('CLI Core Commands', () => {
 
     it('should detect invalid configuration names', () => {
       expect(() => {
-        execSync(`node ${CLI_PATH} dry-run invalid-config`, {
+        execSync(`node ${CLI_PATH} dry-run invalid-config --output "${testProjectDir}"`, {
           encoding: 'utf-8',
-          cwd: testProjectDir,
         });
       }).toThrow();
     });
@@ -145,8 +143,7 @@ describe('CLI Core Commands', () => {
       await fs.writeFile(path.join(claudeDir, 'test.txt'), 'existing content');
 
       // Generate new config
-      const output = execSync(`node ${CLI_PATH} nextjs-15 `, {
-        cwd: testProjectDir,
+      const output = execSync(`node ${CLI_PATH} nextjs-15 --output "${testProjectDir}"`, {
         encoding: 'utf-8',
       });
 
@@ -183,8 +180,7 @@ describe('CLI Core Commands', () => {
   describe('validate command', () => {
     it('should validate a properly generated configuration', async () => {
       // First generate a config
-      execSync(`node ${CLI_PATH} nextjs-15 shadcn `, {
-        cwd: testProjectDir,
+      execSync(`node ${CLI_PATH} nextjs-15 shadcn --output "${testProjectDir}"`, {
         encoding: 'utf-8',
       });
 
@@ -245,8 +241,7 @@ describe('CLI Core Commands', () => {
 
     it('should handle missing configuration gracefully', () => {
       expect(() => {
-        execSync(`node ${CLI_PATH} non-existent-config `, {
-          cwd: testProjectDir,
+        execSync(`node ${CLI_PATH} non-existent-config --output "${testProjectDir}"`, {
           encoding: 'utf-8',
         });
       }).toThrow(/Unknown configuration/i);
