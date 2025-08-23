@@ -140,7 +140,7 @@ describe('CLI Integration Tests', () => {
 
       // Check that backup was created
       const files = await fs.readdir(testDir);
-      const backupDir = files.find(f => f.includes('.backup-'));
+      const backupDir = files.find(f => f.startsWith('.claude.backup-'));
       expect(backupDir).toBeDefined();
 
       if (backupDir) {
