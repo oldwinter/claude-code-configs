@@ -2,6 +2,17 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
+import crypto from 'crypto';
+
+// Polyfill for crypto.getRandomValues for Node < 19
+if (!globalThis.crypto) {
+  globalThis.crypto = crypto as any;
+}
+if (!globalThis.crypto.getRandomValues) {
+  globalThis.crypto.getRandomValues = function(array: any) {
+    return crypto.randomFillSync(array);
+  };
+}
 
 export const TEST_TEMP_DIR = path.join(os.tmpdir(), 'claude-config-test');
 
