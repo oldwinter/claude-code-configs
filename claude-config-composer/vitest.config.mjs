@@ -1,3 +1,4 @@
+import './vitest-polyfill.mjs';
 import path from 'path';
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'url';
