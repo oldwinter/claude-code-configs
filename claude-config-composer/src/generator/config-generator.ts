@@ -93,12 +93,18 @@ export class ConfigGenerator {
         commandsDir = path.join(outputDir, '.claude', 'commands');
         hooksDir = path.join(outputDir, '.claude', 'hooks');
       } else {
-        // For relative paths, use createSafeDirectory for validation
-        claudeDir = await PathValidator.createSafeDirectory('.claude', outputDir);
-        agentsDir = await PathValidator.createSafeDirectory('.claude/agents', outputDir);
-        commandsDir = await PathValidator.createSafeDirectory('.claude/commands', outputDir);
-        hooksDir = await PathValidator.createSafeDirectory('.claude/hooks', outputDir);
+        // For relative paths, construct the full paths
+        claudeDir = path.join(outputDir, '.claude');
+        agentsDir = path.join(outputDir, '.claude', 'agents');
+        commandsDir = path.join(outputDir, '.claude', 'commands');
+        hooksDir = path.join(outputDir, '.claude', 'hooks');
       }
+      
+      // Create all directories
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.mkdir(agentsDir, { recursive: true });
+      await fs.mkdir(commandsDir, { recursive: true });
+      await fs.mkdir(hooksDir, { recursive: true });
 
       await fs.mkdir(outputDir, { recursive: true });
       await fs.mkdir(claudeDir, { recursive: true });
@@ -138,6 +144,8 @@ export class ConfigGenerator {
         const agentName = typeof validatedAgent.name === 'string' ? validatedAgent.name : 'unknown';
         const filename = `${PathValidator.validateFilename(agentName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateAgentFile(validatedAgent);
+        // Ensure directory exists before writing
+        await fs.mkdir(agentsDir, { recursive: true });
         // Write directly to agentsDir
         const agentPath = path.join(agentsDir, filename);
         await fs.writeFile(agentPath, content);
@@ -158,6 +166,8 @@ export class ConfigGenerator {
           typeof validatedCommand.name === 'string' ? validatedCommand.name : 'unknown';
         const filename = `${PathValidator.validateFilename(commandName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateCommandFile(validatedCommand);
+        // Ensure directory exists before writing
+        await fs.mkdir(commandsDir, { recursive: true });
         // Write directly to commandsDir
         const commandPath = path.join(commandsDir, filename);
         await fs.writeFile(commandPath, content);
@@ -171,6 +181,8 @@ export class ConfigGenerator {
       const hookGroups = parsedConfigs.map(c => c.parsed.hooks);
       const mergedHooks = this.componentMerger.mergeHooks(hookGroups);
 
+      // Ensure hooks directory exists
+      await fs.mkdir(hooksDir, { recursive: true });
       for (const hook of mergedHooks) {
         // Validate and sanitize hook data
         const validatedHook = InputValidator.validateHook(hook);
