@@ -1,12 +1,11 @@
 import { execSync } from 'child_process';
 import fsSync from 'fs';
 import fs from 'fs/promises';
-import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TEST_TEMP_DIR } from '../setup';
 
 const CLI_PATH = path.resolve(__dirname, '../../dist/cli.js');
-const TEST_TEMP_DIR = path.join(os.tmpdir(), 'claude-config-test');
 
 describe('CLI Integration Tests', () => {
   let testDir: string;
@@ -118,7 +117,6 @@ describe('CLI Integration Tests', () => {
 
       expect(result).toContain('Configuration generated in');
 
-      const _claudeDir = path.join(testDir, '.claude');
       const claudeMd = await fs.readFile(path.join(testDir, 'CLAUDE.md'), 'utf8');
 
       // Should contain content from both configurations
