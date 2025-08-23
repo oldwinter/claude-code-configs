@@ -26,23 +26,22 @@ export class ConfigGenerator {
     showProgress: boolean = true
   ): Promise<void> {
     // Handle output directory path
-    // Resolve to absolute path immediately while we can
-    // This prevents issues when the current directory is deleted during execution
+    // The outputDir should already be validated and could be absolute or relative
     let resolvedOutputDir = outputDir || '.';
 
-    // Resolve to absolute path early, before any async operations
+    // If the path is already absolute, use it directly
+    // Otherwise, it's a relative path that should be used as-is
+    // This avoids calling path.resolve() which can fail in CI
     let absoluteOutputDir: string;
     
     if (path.isAbsolute(resolvedOutputDir)) {
       // Already absolute, just normalize it
       absoluteOutputDir = path.normalize(resolvedOutputDir);
     } else {
-      // For relative paths, use path.resolve which internally uses process.cwd()
-      // path.resolve doesn't throw, but process.cwd() might return an invalid path in CI
-      absoluteOutputDir = path.resolve(resolvedOutputDir);
-      
-      // In CI environments, the resolved path might not be valid
-      // We'll check this later when we actually try to create directories
+      // For relative paths, just use them as-is
+      // The file system operations will resolve them relative to the current directory
+      // This avoids the problematic process.cwd() call in CI
+      absoluteOutputDir = resolvedOutputDir;
     }
 
     // Use absoluteOutputDir from here on
