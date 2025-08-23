@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { ConfigRegistry } from '../../registry/config-registry';
 import { ErrorHandler, RegistryError, ValidationError } from '../../utils/error-handler';
+import { loadEsmModule } from '../../utils/esm-loader';
 import { DisplayUtils } from '../utils/display';
 
 export interface DryRunOptions {
@@ -18,7 +19,7 @@ export class DryRunCommand {
       }
 
       const registry = new ConfigRegistry();
-      const ora = (await import('ora')).default;
+      const ora = await loadEsmModule<typeof import('ora').default>('ora');
       const spinner = ora('Analyzing configurations...').start();
 
       try {
