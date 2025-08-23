@@ -1,6 +1,5 @@
 import { checkbox, confirm, select } from '@inquirer/prompts';
 import chalk from 'chalk';
-import ora from 'ora';
 import { ConfigGenerator } from '../../generator/config-generator';
 import { ConfigRegistry } from '../../registry/config-registry';
 import { ErrorHandler, GenerationError, RegistryError } from '../../utils/error-handler';
@@ -22,6 +21,7 @@ export class InteractiveCommand {
       DisplayUtils.showTitle(useFancy);
 
       const registry = new ConfigRegistry();
+      const ora = (await import('ora')).default;
       const spinner = ora('Loading available configurations...').start();
 
       try {

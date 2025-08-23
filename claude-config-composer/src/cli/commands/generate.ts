@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import fs from 'fs/promises';
-import ora from 'ora';
 import path from 'path';
 import { ConfigGenerator } from '../../generator/config-generator';
 import { ConfigRegistry } from '../../registry/config-registry';
@@ -43,6 +42,7 @@ export class GenerateCommand {
       }
 
       const registry = new ConfigRegistry();
+      const ora = (await import('ora')).default;
       const spinner = ora('Initializing registry...').start();
 
       try {

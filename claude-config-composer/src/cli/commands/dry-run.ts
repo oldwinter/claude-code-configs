@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import ora from 'ora';
 import { ConfigRegistry } from '../../registry/config-registry';
 import { ErrorHandler, RegistryError, ValidationError } from '../../utils/error-handler';
 import { DisplayUtils } from '../utils/display';
@@ -19,6 +18,7 @@ export class DryRunCommand {
       }
 
       const registry = new ConfigRegistry();
+      const ora = (await import('ora')).default;
       const spinner = ora('Analyzing configurations...').start();
 
       try {

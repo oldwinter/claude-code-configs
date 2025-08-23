@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import fs from 'fs/promises';
-import ora from 'ora';
 import path from 'path';
 import { ComponentMerger } from '../merger/component-merger';
 import { ConfigMerger } from '../merger/config-merger';
@@ -75,7 +74,8 @@ export class ConfigGenerator {
     ];
 
     let currentStep = 0;
-    const spinner = showProgress ? ora(steps[currentStep]).start() : null;
+    const ora = showProgress ? (await import('ora')).default : null;
+    const spinner = showProgress && ora ? ora(steps[currentStep]).start() : null;
 
     try {
       // Parse all configurations
