@@ -82,12 +82,12 @@ export class BackupUtils {
   /**
    * Ensure directory is added to .gitignore
    */
-  static async ensureGitignored(dirName: string): Promise<void> {
+  static async ensureGitignored(dirName: string, targetDir?: string): Promise<void> {
     return ErrorHandler.wrapAsync(
       async () => {
         try {
-          // Use relative path to avoid process.cwd() issues in CI
-          const gitignorePath = '.gitignore';
+          // If targetDir is provided, create .gitignore there, otherwise use current directory
+          const gitignorePath = targetDir ? path.join(targetDir, '.gitignore') : '.gitignore';
           let gitignoreContent = '';
 
           try {

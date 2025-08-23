@@ -98,9 +98,10 @@ export class GenerateCommand {
         );
       }
 
-      // Ensure .claude/ is gitignored (unless --no-gitignore or custom output)
-      if (options.gitignore !== false && targetDir === '.') {
-        await BackupUtils.ensureGitignored('.claude');
+      // Ensure .claude/ is gitignored (unless --no-gitignore)
+      if (options.gitignore !== false) {
+        // Use targetDir to create the .gitignore in the correct location
+        await BackupUtils.ensureGitignored('.claude', targetDir);
       }
 
       // Show success message and next steps

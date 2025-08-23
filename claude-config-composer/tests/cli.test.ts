@@ -90,8 +90,7 @@ describe('CLI Core Commands', () => {
 
   describe('generate command', () => {
     it('should generate configuration files for single config', async () => {
-      execSync(`node ${CLI_PATH} nextjs-15 `, {
-        cwd: testProjectDir,
+      execSync(`node ${CLI_PATH} nextjs-15 --output "${testProjectDir}"`, {
         encoding: 'utf-8',
       });
 
@@ -171,8 +170,7 @@ describe('CLI Core Commands', () => {
       // Create .gitignore
       await fs.writeFile(path.join(testProjectDir, '.gitignore'), 'node_modules/\n');
 
-      execSync(`node ${CLI_PATH} nextjs-15 `, {
-        cwd: testProjectDir,
+      execSync(`node ${CLI_PATH} nextjs-15 --output "${testProjectDir}"`, {
         encoding: 'utf-8',
       });
 

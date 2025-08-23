@@ -240,7 +240,17 @@ export class DisplayUtils {
    * Show generation progress
    */
   static showGenerationProgress(targetDir: string): void {
-    const displayPath = targetDir === '.' ? 'current directory' : targetDir;
+    // Check if targetDir is the current directory (either '.' or the actual cwd path)
+    let displayPath = 'current directory';
+    try {
+      const cwd = process.cwd();
+      if (targetDir !== '.' && targetDir !== cwd) {
+        displayPath = targetDir;
+      }
+    } catch {
+      // If process.cwd() fails, just use the targetDir as-is
+      displayPath = targetDir === '.' ? 'current directory' : targetDir;
+    }
     console.log(chalk.green(`✅ Configuration generated in ${displayPath}`));
 
     // Show what was created

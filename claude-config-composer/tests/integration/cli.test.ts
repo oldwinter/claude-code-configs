@@ -67,12 +67,11 @@ describe('CLI Integration Tests', () => {
 
   describe('Configuration Generation', () => {
     it('should generate nextjs-15 configuration successfully', async () => {
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore`, {
+      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "${testDir}"`, {
         encoding: 'utf8',
-        cwd: testDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
 
       // Check that .claude directory was created
       const claudeDir = path.join(testDir, '.claude');
@@ -96,12 +95,11 @@ describe('CLI Integration Tests', () => {
     });
 
     it('should generate shadcn configuration successfully', async () => {
-      const result = execSync(`node "${CLI_PATH}" shadcn --no-backup --no-gitignore`, {
+      const result = execSync(`node "${CLI_PATH}" shadcn --no-backup --no-gitignore --output "${testDir}"`, {
         encoding: 'utf8',
-        cwd: testDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
 
       const claudeDir = path.join(testDir, '.claude');
       expect(fsSync.existsSync(claudeDir)).toBe(true);
@@ -114,12 +112,11 @@ describe('CLI Integration Tests', () => {
     });
 
     it('should merge multiple configurations correctly', async () => {
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 shadcn --no-backup --no-gitignore`, {
+      const result = execSync(`node "${CLI_PATH}" nextjs-15 shadcn --no-backup --no-gitignore --output "${testDir}"`, {
         encoding: 'utf8',
-        cwd: testDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
 
       const _claudeDir = path.join(testDir, '.claude');
       const claudeMd = await fs.readFile(path.join(testDir, 'CLAUDE.md'), 'utf8');
@@ -137,12 +134,11 @@ describe('CLI Integration Tests', () => {
       await fs.mkdir(existingClaudeDir, { recursive: true });
       await fs.writeFile(path.join(existingClaudeDir, 'test.txt'), 'existing content');
 
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-gitignore`, {
+      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-gitignore --output "${testDir}"`, {
         encoding: 'utf8',
-        cwd: testDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
 
       // Check that backup was created
       const files = await fs.readdir(testDir);
@@ -158,12 +154,11 @@ describe('CLI Integration Tests', () => {
     });
 
     it('should handle gitignore addition', async () => {
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup`, {
+      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --output "${testDir}"`, {
         encoding: 'utf8',
-        cwd: testDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
 
       // Check that .gitignore was created/updated
       const gitignorePath = path.join(testDir, '.gitignore');
@@ -177,9 +172,8 @@ describe('CLI Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle invalid configuration names gracefully', () => {
       expect(() => {
-        execSync(`node "${CLI_PATH}" invalid-config --no-backup --no-gitignore`, {
+        execSync(`node "${CLI_PATH}" invalid-config --no-backup --no-gitignore --output "${testDir}"`, {
           encoding: 'utf8',
-          cwd: testDir,
         });
       }).toThrow();
     });
@@ -192,9 +186,8 @@ describe('CLI Integration Tests', () => {
 
       try {
         expect(() => {
-          execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore`, {
+          execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore --output "${restrictedDir}"`, {
             encoding: 'utf8',
-            cwd: restrictedDir,
           });
         }).toThrow();
       } finally {
@@ -228,7 +221,7 @@ describe('CLI Integration Tests', () => {
         cwd: nestedDir,
       });
 
-      expect(result).toContain('Configuration generated in current directory');
+      expect(result).toContain('Configuration generated in');
       expect(fsSync.existsSync(path.join(nestedDir, '.claude'))).toBe(true);
     });
 
