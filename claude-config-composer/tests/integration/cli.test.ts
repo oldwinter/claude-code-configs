@@ -72,6 +72,9 @@ describe('CLI Integration Tests', () => {
 
       expect(result).toContain('Configuration generated in');
 
+      // Add delay for CI file system sync
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Check that .claude directory was created
       const claudeDir = path.join(testDir, '.claude');
       expect(fsSync.existsSync(claudeDir)).toBe(true);
@@ -137,6 +140,9 @@ describe('CLI Integration Tests', () => {
       });
 
       expect(result).toContain('Configuration generated in');
+
+      // Add delay for CI file system sync
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Check that backup was created
       const files = await fs.readdir(testDir);
