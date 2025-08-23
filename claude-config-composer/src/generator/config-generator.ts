@@ -31,21 +31,18 @@ export class ConfigGenerator {
     let resolvedOutputDir = outputDir || '.';
 
     // Resolve to absolute path early, before any async operations
-    // Use a try-catch in case process.cwd() fails
     let absoluteOutputDir: string;
-    try {
+    
+    if (path.isAbsolute(resolvedOutputDir)) {
+      // Already absolute, just normalize it
+      absoluteOutputDir = path.normalize(resolvedOutputDir);
+    } else {
+      // For relative paths, use path.resolve which internally uses process.cwd()
+      // path.resolve doesn't throw, but process.cwd() might return an invalid path in CI
       absoluteOutputDir = path.resolve(resolvedOutputDir);
-    } catch {
-      // If we can't resolve (e.g., cwd deleted), use the path as-is if absolute
-      // or throw a clear error if it's relative
-      if (path.isAbsolute(resolvedOutputDir)) {
-        absoluteOutputDir = path.normalize(resolvedOutputDir);
-      } else {
-        throw new Error(
-          `Cannot resolve relative path '${resolvedOutputDir}' - current directory may not exist. ` +
-            'Please provide an absolute path or ensure the current directory is valid.'
-        );
-      }
+      
+      // In CI environments, the resolved path might not be valid
+      // We'll check this later when we actually try to create directories
     }
 
     // Use absoluteOutputDir from here on
