@@ -87,6 +87,14 @@ export interface ConfigComponent {
   metadata?: ConfigMetadata;
 }
 
+export interface PackageDependencies {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
+}
+
 export interface ConfigMetadata {
   title?: string;
   description?: string;

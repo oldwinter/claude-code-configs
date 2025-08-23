@@ -51,7 +51,7 @@ function createGradientOrFallback(
 ): (text: string) => string {
   if (gradient && typeof gradient === 'function') {
     try {
-      const gradientFn = gradient as any;
+      const gradientFn = gradient as unknown as (colors: string[]) => (text: string) => string;
       return gradientFn(colors);
     } catch {
       return (text: string) => chalk.hex(fallbackColor)(text);
@@ -146,7 +146,11 @@ export function animateText(
 ) {
   if (!chalkAnimation) {
     console.log(chalk.white(text));
-    return { stop: () => {} };
+    return {
+      stop: () => {
+        /* no-op */
+      },
+    };
   }
   const animation = chalkAnimation[type](text);
   return animation;
@@ -201,10 +205,18 @@ export function createFunSpinner(text: string) {
       start: () => console.log(chalk.blue('⚡'), text),
       success: (opts?: { text?: string }) => console.log(chalk.green('✅'), opts?.text || 'Done'),
       error: (opts?: { text?: string }) => console.log(chalk.red('❌'), opts?.text || 'Failed'),
-      update: () => {},
-      stop: () => {},
-      warn: () => {},
-      clear: () => {},
+      update: () => {
+        /* no-op */
+      },
+      stop: () => {
+        /* no-op */
+      },
+      warn: () => {
+        /* no-op */
+      },
+      clear: () => {
+        /* no-op */
+      },
     };
   }
   const spinner = createSpinner({ text });
@@ -220,8 +232,12 @@ export function createProgressBar(title: string, total: number) {
       stop: () => console.log('Complete!'),
       getTotalProgress: () => 0,
       getProgress: () => 0,
-      increment: () => {},
-      setTotal: () => {},
+      increment: () => {
+        /* no-op */
+      },
+      setTotal: () => {
+        /* no-op */
+      },
     };
   }
 

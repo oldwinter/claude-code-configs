@@ -132,8 +132,7 @@ describe('ConfigMerger', () => {
       const merger = new ConfigMerger();
       const configs = [
         {
-          content:
-            '# Title\n\n```javascript\nconst x = "hello";\n```\n\n## Special chars: ${}[]\n\nThis section has special characters like $, {}, and [] in the title.',
+          content: `# Title\n\n\`\`\`javascript\nconst x = "hello";\n\`\`\`\n\n## Special chars: \${}[]\n\nThis section has special characters like $, {}, and [] in the title.`,
           metadata: {
             id: 'special',
             name: 'Special',

@@ -1,4 +1,5 @@
 import type { ConfigMetadata } from '../registry/config-registry';
+import type { PackageDependencies } from '../types/config';
 import { ConfigurationError, ErrorHandler, ValidationError } from '../utils/error-handler';
 
 interface Section {
@@ -164,7 +165,13 @@ export class ConfigMerger {
       .trim();
   }
 
-  merge(configs: Array<{ content: string; metadata: ConfigMetadata; dependencies?: any }>): string {
+  merge(
+    configs: Array<{
+      content: string;
+      metadata: ConfigMetadata;
+      dependencies?: PackageDependencies;
+    }>
+  ): string {
     return ErrorHandler.wrapSync(() => {
       // Validate inputs
       if (!configs || !Array.isArray(configs)) {
@@ -637,7 +644,7 @@ export class ConfigMerger {
 
   private addMetadata(
     output: string[],
-    configs: Array<{ metadata: ConfigMetadata; dependencies?: any }>
+    configs: Array<{ metadata: ConfigMetadata; dependencies?: PackageDependencies }>
   ) {
     output.push('');
     output.push('---');
@@ -662,7 +669,7 @@ export class ConfigMerger {
       const allPeerDeps = new Map<string, Set<string>>();
       const allEngines = new Map<string, Set<string>>();
 
-      for (const { metadata, dependencies } of configsWithDeps) {
+      for (const { dependencies } of configsWithDeps) {
         if (dependencies?.peerDependencies) {
           for (const [pkg, version] of Object.entries(dependencies.peerDependencies)) {
             if (!allPeerDeps.has(pkg)) allPeerDeps.set(pkg, new Set());

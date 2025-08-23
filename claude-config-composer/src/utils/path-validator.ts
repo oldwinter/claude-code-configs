@@ -25,10 +25,14 @@ export class PathValidator {
     /^\.\.[\\/]/, // Leading parent directory
     /[\\/]\.\.[\\/]/, // Middle parent directory
     /[\\/]\.\.$/, // Trailing parent directory
-    /^[\\/]/, // Absolute paths starting with / or \
-    /^[a-zA-Z]:[\\/]/, // Windows absolute paths (C:\, D:\, etc.)
     /\0/, // Null bytes
     // Note: Windows invalid characters are checked separately for filenames only
+    // Note: Absolute paths are blocked here but allowed in validateOutputPath
+  ];
+
+  private static readonly ABSOLUTE_PATH_PATTERNS = [
+    /^[\\/]/, // Absolute paths starting with / or \
+    /^[a-zA-Z]:[\\/]/, // Windows absolute paths (C:\, D:\, etc.)
   ];
 
   private static readonly MAX_PATH_LENGTH = 260; // Windows MAX_PATH
@@ -124,6 +128,33 @@ export class PathValidator {
   }
 
   /**
+   * Validates an output path for CLI usage (allows absolute paths)
+   */
+  static validateOutputPath(inputPath: string): string {
+    if (!inputPath || typeof inputPath !== 'string') {
+      throw new PathValidationError('Path must be a non-empty string');
+    }
+
+    // Check for dangerous patterns (but allow absolute paths)
+    for (const pattern of PathValidator.UNSAFE_PATTERNS) {
+      if (pattern.test(inputPath)) {
+        throw new PathValidationError(`Path contains unsafe pattern: ${pattern.source}`, inputPath);
+      }
+    }
+
+    // Check path length limits
+    if (inputPath.length > PathValidator.MAX_PATH_LENGTH) {
+      throw new PathValidationError(
+        `Path exceeds maximum length of ${PathValidator.MAX_PATH_LENGTH} characters`,
+        inputPath
+      );
+    }
+
+    // Allow absolute paths for output directory
+    return inputPath;
+  }
+
+  /**
    * Validates that a path is safe and within allowed boundaries
    */
   static validatePath(inputPath: string, allowedBasePath?: string): string {
@@ -131,8 +162,9 @@ export class PathValidator {
       throw new PathValidationError('Path must be a non-empty string');
     }
 
-    // Check for unsafe patterns
-    for (const pattern of PathValidator.UNSAFE_PATTERNS) {
+    // Check for unsafe patterns including absolute paths
+    const allPatterns = [...PathValidator.UNSAFE_PATTERNS, ...PathValidator.ABSOLUTE_PATH_PATTERNS];
+    for (const pattern of allPatterns) {
       if (pattern.test(inputPath)) {
         throw new PathValidationError(`Path contains unsafe pattern: ${pattern.source}`, inputPath);
       }
@@ -186,7 +218,7 @@ export class PathValidator {
     }
 
     // Remove null bytes and control characters
-    let sanitized = filename.replace(/[\0-\x1f\x7f-\x9f]/g, '');
+    let sanitized = filename.replace(/[\0-\u001f\u007f-\u009f]/g, '');
 
     // Platform-specific validation
     if (PathValidator.isWindows()) {

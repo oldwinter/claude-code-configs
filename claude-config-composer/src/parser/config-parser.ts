@@ -154,7 +154,7 @@ export class ConfigParser {
       const hooks: Hook[] = [];
       let settings: Settings | null = null;
       let claudeMd: string | null = null;
-      let dependencies: any;
+      let dependencies: Record<string, string> | undefined;
 
       // Validate config path
       if (!configPath || typeof configPath !== 'string') {
@@ -403,7 +403,7 @@ export class ConfigParser {
       if (frontmatterEnd > 0) {
         const frontmatter = lines.slice(1, frontmatterEnd).join('\n');
         try {
-          metadata = yaml.load(frontmatter) as any;
+          metadata = yaml.load(frontmatter) as Record<string, unknown>;
           if (!metadata || typeof metadata !== 'object') {
             metadata = {};
           }
@@ -489,7 +489,7 @@ export class ConfigParser {
       if (frontmatterEnd > 0) {
         const frontmatter = lines.slice(1, frontmatterEnd).join('\n');
         try {
-          metadata = yaml.load(frontmatter) as any;
+          metadata = yaml.load(frontmatter) as Record<string, unknown>;
           if (!metadata || typeof metadata !== 'object') {
             metadata = {};
           }

@@ -221,7 +221,7 @@ describe('ConfigParser Unit Tests', () => {
       } finally {
         // Cleanup
         try {
-          await fs.rmdir(tempDir, { recursive: true });
+          await fs.rm(tempDir, { recursive: true });
         } catch {
           // Ignore cleanup errors
         }
@@ -289,7 +289,7 @@ Content here`
       expect(config.claudeMd).toBeDefined();
       expect(config.claudeMd).not.toBeNull();
 
-      const content = config.claudeMd!;
+      const content = config.claudeMd as string;
       // Should contain markdown headers
       expect(content).toMatch(/^#\s+/m);
       expect(content).toMatch(/^##\s+/m);
@@ -307,7 +307,7 @@ Content here`
       expect(config.claudeMd).toBeDefined();
       expect(config.claudeMd).not.toBeNull();
 
-      const content = config.claudeMd!;
+      const content = config.claudeMd as string;
       // Should not have encoding issues
       expect(content).not.toContain('â€™'); // Common encoding issue
       expect(content).not.toContain('Ã'); // Another encoding issue
@@ -324,7 +324,7 @@ Content here`
       expect(config.claudeMd).toBeDefined();
       expect(config.claudeMd).not.toBeNull();
 
-      const content = config.claudeMd!;
+      const content = config.claudeMd as string;
       // Should use consistent line endings (Unix-style)
       expect(content).not.toContain('\r\n');
 

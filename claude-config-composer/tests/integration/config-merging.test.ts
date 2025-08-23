@@ -145,7 +145,11 @@ describe('Configuration Merging Tests', () => {
     });
 
     it('should handle empty configuration list', async () => {
-      const configs: any[] = [];
+      const configs: Array<{
+        content: string;
+        metadata: import('../../src/registry/config-registry').ConfigMetadata;
+        dependencies?: import('../../src/types/config').PackageDependencies;
+      }> = [];
 
       const mergedContent = configMerger.merge(configs);
 

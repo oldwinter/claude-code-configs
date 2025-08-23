@@ -274,30 +274,38 @@ export class ComponentMerger {
     return merged;
   }
 
-  private isValidHookEntry(entry: any): boolean {
-    return entry && typeof entry === 'object' && 'hooks' in entry && Array.isArray(entry.hooks);
+  private isValidHookEntry(entry: unknown): boolean {
+    return (
+      entry !== null &&
+      typeof entry === 'object' &&
+      'hooks' in entry &&
+      Array.isArray((entry as { hooks: unknown }).hooks)
+    );
   }
 
-  private normalizeHookEntry(entry: any): HookEntry {
+  private normalizeHookEntry(entry: unknown): HookEntry {
     const normalized: HookEntry = {
       hooks: [],
     };
 
+    const entryObj = entry as Record<string, unknown>;
+
     // Only include matcher if it exists and is not empty
-    if (entry.matcher && entry.matcher !== '') {
-      normalized.matcher = entry.matcher;
+    if (entryObj.matcher && entryObj.matcher !== '') {
+      normalized.matcher = entryObj.matcher as string;
     }
 
     // Process hooks array
-    if (Array.isArray(entry.hooks)) {
-      for (const hook of entry.hooks) {
+    if (Array.isArray(entryObj.hooks)) {
+      for (const hook of entryObj.hooks) {
         if (hook && typeof hook === 'object' && 'command' in hook) {
+          const hookObj = hook as Record<string, unknown>;
           const hookCommand: HookCommand = {
-            type: hook.type || 'command',
-            command: hook.command,
+            type: 'command',
+            command: hookObj.command as string,
           };
-          if (hook.timeout) {
-            hookCommand.timeout = hook.timeout;
+          if (hookObj.timeout) {
+            hookCommand.timeout = hookObj.timeout as number;
           }
           normalized.hooks.push(hookCommand);
         }

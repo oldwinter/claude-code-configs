@@ -26,15 +26,30 @@ export class ConfigGenerator {
     showProgress: boolean = true
   ): Promise<void> {
     // Handle output directory path
-    // Always normalize the path, whether absolute or relative
-    // This avoids the need for process.cwd() which can fail in CI
-    if (!outputDir) {
-      outputDir = '.';
+    // Resolve to absolute path immediately while we can
+    // This prevents issues when the current directory is deleted during execution
+    let resolvedOutputDir = outputDir || '.';
+
+    // Resolve to absolute path early, before any async operations
+    // Use a try-catch in case process.cwd() fails
+    let absoluteOutputDir: string;
+    try {
+      absoluteOutputDir = path.resolve(resolvedOutputDir);
+    } catch {
+      // If we can't resolve (e.g., cwd deleted), use the path as-is if absolute
+      // or throw a clear error if it's relative
+      if (path.isAbsolute(resolvedOutputDir)) {
+        absoluteOutputDir = path.normalize(resolvedOutputDir);
+      } else {
+        throw new Error(
+          `Cannot resolve relative path '${resolvedOutputDir}' - current directory may not exist. ` +
+            'Please provide an absolute path or ensure the current directory is valid.'
+        );
+      }
     }
 
-    // Normalize the path - this works for both absolute and relative paths
-    // and doesn't require process.cwd()
-    outputDir = path.normalize(outputDir);
+    // Use absoluteOutputDir from here on
+    resolvedOutputDir = absoluteOutputDir;
 
     // Validate input configurations
     try {
@@ -79,34 +94,15 @@ export class ConfigGenerator {
       if (spinner) spinner.start(steps[currentStep]);
 
       // Create directories
-      // For absolute outputDir paths, join directly
-      // For relative paths, createSafeDirectory handles validation
-      let claudeDir: string;
-      let agentsDir: string;
-      let commandsDir: string;
-      let hooksDir: string;
+      // Since resolvedOutputDir is now always absolute, we can safely join paths
+      const claudeDir = path.join(resolvedOutputDir, '.claude');
+      const agentsDir = path.join(claudeDir, 'agents');
+      const commandsDir = path.join(claudeDir, 'commands');
+      const hooksDir = path.join(claudeDir, 'hooks');
 
-      if (path.isAbsolute(outputDir)) {
-        // For absolute paths (e.g., test temp directories), join directly
-        claudeDir = path.join(outputDir, '.claude');
-        agentsDir = path.join(outputDir, '.claude', 'agents');
-        commandsDir = path.join(outputDir, '.claude', 'commands');
-        hooksDir = path.join(outputDir, '.claude', 'hooks');
-      } else {
-        // For relative paths, construct the full paths
-        claudeDir = path.join(outputDir, '.claude');
-        agentsDir = path.join(outputDir, '.claude', 'agents');
-        commandsDir = path.join(outputDir, '.claude', 'commands');
-        hooksDir = path.join(outputDir, '.claude', 'hooks');
-      }
-      
-      // Create all directories
-      await fs.mkdir(claudeDir, { recursive: true });
-      await fs.mkdir(agentsDir, { recursive: true });
-      await fs.mkdir(commandsDir, { recursive: true });
-      await fs.mkdir(hooksDir, { recursive: true });
-
-      await fs.mkdir(outputDir, { recursive: true });
+      // Create all directories with absolute paths
+      // Create parent directory first to ensure it exists
+      await fs.mkdir(resolvedOutputDir, { recursive: true });
       await fs.mkdir(claudeDir, { recursive: true });
       await fs.mkdir(agentsDir, { recursive: true });
       await fs.mkdir(commandsDir, { recursive: true });
@@ -126,8 +122,8 @@ export class ConfigGenerator {
 
       if (claudeMdConfigs.length > 0) {
         const mergedClaudeMd = this.configMerger.merge(claudeMdConfigs);
-        // Write directly to outputDir without additional path validation since outputDir is already validated
-        const claudeMdPath = path.join(outputDir, 'CLAUDE.md');
+        // Write directly to resolvedOutputDir without additional path validation since resolvedOutputDir is already validated
+        const claudeMdPath = path.join(resolvedOutputDir, 'CLAUDE.md');
         await fs.writeFile(claudeMdPath, mergedClaudeMd);
       }
       if (spinner) spinner.succeed(steps[currentStep]);
@@ -144,9 +140,7 @@ export class ConfigGenerator {
         const agentName = typeof validatedAgent.name === 'string' ? validatedAgent.name : 'unknown';
         const filename = `${PathValidator.validateFilename(agentName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateAgentFile(validatedAgent);
-        // Ensure directory exists before writing
-        await fs.mkdir(agentsDir, { recursive: true });
-        // Write directly to agentsDir
+        // Write directly to agentsDir (already created above)
         const agentPath = path.join(agentsDir, filename);
         await fs.writeFile(agentPath, content);
       }
@@ -166,9 +160,7 @@ export class ConfigGenerator {
           typeof validatedCommand.name === 'string' ? validatedCommand.name : 'unknown';
         const filename = `${PathValidator.validateFilename(commandName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateCommandFile(validatedCommand);
-        // Ensure directory exists before writing
-        await fs.mkdir(commandsDir, { recursive: true });
-        // Write directly to commandsDir
+        // Write directly to commandsDir (already created above)
         const commandPath = path.join(commandsDir, filename);
         await fs.writeFile(commandPath, content);
       }
@@ -181,8 +173,7 @@ export class ConfigGenerator {
       const hookGroups = parsedConfigs.map(c => c.parsed.hooks);
       const mergedHooks = this.componentMerger.mergeHooks(hookGroups);
 
-      // Ensure hooks directory exists
-      await fs.mkdir(hooksDir, { recursive: true });
+      // Process hooks (directory already created above)
       for (const hook of mergedHooks) {
         // Validate and sanitize hook data
         const validatedHook = InputValidator.validateHook(hook);
@@ -221,7 +212,7 @@ export class ConfigGenerator {
       const settingsPath = await PathValidator.createSafeFilePath(
         'settings.json',
         '.claude',
-        outputDir
+        resolvedOutputDir
       );
 
       await fs.writeFile(settingsPath, JSON.stringify(validatedSettings, null, 2));
@@ -232,7 +223,7 @@ export class ConfigGenerator {
       // Validate the generated structure
       currentStep++;
       if (spinner) spinner.start(steps[currentStep]);
-      const validation = await this.validateGeneratedStructure(outputDir);
+      const validation = await this.validateGeneratedStructure(resolvedOutputDir);
       if (!validation.valid) {
         if (spinner) spinner.warn(`${steps[currentStep]} - ${validation.errors.length} warnings`);
         validation.errors.forEach(error => console.warn(chalk.yellow(`   - ${error}`)));

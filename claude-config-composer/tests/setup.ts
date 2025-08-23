@@ -6,10 +6,10 @@ import { afterAll, beforeAll } from 'vitest';
 
 // Polyfill for crypto.getRandomValues for Node < 19
 if (!globalThis.crypto) {
-  globalThis.crypto = crypto as any;
+  globalThis.crypto = crypto as typeof globalThis.crypto;
 }
 if (!globalThis.crypto.getRandomValues) {
-  globalThis.crypto.getRandomValues = (array: any) => crypto.randomFillSync(array);
+  globalThis.crypto.getRandomValues = (array: ArrayBufferView) => crypto.randomFillSync(array);
 }
 
 export const TEST_TEMP_DIR = path.join(os.tmpdir(), 'claude-config-test');

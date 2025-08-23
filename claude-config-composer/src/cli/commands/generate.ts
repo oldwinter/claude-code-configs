@@ -129,11 +129,8 @@ export class GenerateCommand {
 
       // Validate output directory if provided
       if (options.output) {
-        // For absolute paths (like in tests), just check they exist or can be created
-        // For relative paths, validate them properly
-        if (!path.isAbsolute(options.output)) {
-          PathValidator.validatePath(options.output);
-        }
+        // Validate output path (allows absolute paths)
+        PathValidator.validateOutputPath(options.output);
       }
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -173,7 +170,7 @@ export class GenerateCommand {
     // If explicit output is provided, validate and use it
     if (options.output) {
       try {
-        return PathValidator.validatePath(options.output);
+        return PathValidator.validateOutputPath(options.output);
       } catch (error) {
         throw new ValidationError(
           `Invalid output directory: ${error instanceof PathValidationError ? error.message : 'Unknown error'}`,
@@ -186,7 +183,7 @@ export class GenerateCommand {
     if (await GenerateCommand.isClaudeConfigRepo()) {
       const configName = configs.join('-');
       const testPath = path.join('.test-output', configName);
-      return PathValidator.validatePath(testPath);
+      return PathValidator.validateOutputPath(testPath);
     }
 
     // Default: output to current directory (production use)
@@ -220,7 +217,7 @@ export class GenerateCommand {
       }
 
       // Validate the directory path before creating
-      const validatedPath = PathValidator.validatePath(dirPath);
+      const validatedPath = PathValidator.validateOutputPath(dirPath);
       if (validatedPath) {
         await fs.mkdir(validatedPath, { recursive: true });
       }

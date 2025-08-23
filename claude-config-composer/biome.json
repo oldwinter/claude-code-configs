@@ -36,6 +36,7 @@
         "noConfusingVoidType": "error",
         "noConsole": "off",
         "noEmptyBlockStatements": "error",
+        "noControlCharactersInRegex": "off",
         "useIterableCallbackReturn": "off"
       },
       "complexity": {

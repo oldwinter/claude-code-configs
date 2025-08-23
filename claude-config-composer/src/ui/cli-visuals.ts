@@ -110,7 +110,11 @@ export function createLoadingBar(title: string) {
     let gradientTitle: string;
     if (gradient && typeof gradient === 'function') {
       try {
-        const gradientFn = (gradient as any)(['#EB6359', '#E2DDD9', '#1F1F25']);
+        const gradientFn = (gradient as unknown as (colors: string[]) => (text: string) => string)([
+          '#EB6359',
+          '#E2DDD9',
+          '#1F1F25',
+        ]);
         gradientTitle = gradientFn(title);
       } catch {
         gradientTitle = chalk.hex('#EB6359')(title);
@@ -135,7 +139,10 @@ export function showLivePreview(configs: string[]) {
   let title: string;
   if (gradient && typeof gradient === 'function') {
     try {
-      const gradientFn = (gradient as any)(['#EB6359', '#E2DDD9']);
+      const gradientFn = (gradient as unknown as (colors: string[]) => (text: string) => string)([
+        '#EB6359',
+        '#E2DDD9',
+      ]);
       title = gradientFn('LIVE PREVIEW - Your Configuration Blueprint');
     } catch {
       title = chalk.hex('#EB6359')('LIVE PREVIEW - Your Configuration Blueprint');

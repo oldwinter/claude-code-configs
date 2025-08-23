@@ -161,7 +161,7 @@ describe('CLI Core Commands', () => {
 
       // Verify backup contains original file
       const backupContent = await fs.readFile(
-        path.join(testProjectDir, backupDir!, 'test.txt'),
+        path.join(testProjectDir, backupDir ?? '', 'test.txt'),
         'utf-8'
       );
       expect(backupContent).toBe('existing content');
@@ -235,9 +235,13 @@ describe('CLI Core Commands', () => {
         execSync(`node ${CLI_PATH} unknown-command 2>&1`, { encoding: 'utf-8' });
         // Should not reach here - command should fail
         expect(true).toBe(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Check that the error output contains helpful message
-        const errorOutput = error.stdout || error.stderr || error.message || '';
+        const errorOutput =
+          (error as Error & { stdout?: string; stderr?: string }).stdout ||
+          (error as Error & { stdout?: string; stderr?: string }).stderr ||
+          (error as Error).message ||
+          '';
         expect(errorOutput).toMatch(/unknown|Usage:|error|invalid|no valid/i);
       }
     });
@@ -263,7 +267,7 @@ describe('CLI Core Commands', () => {
         });
         // Should not reach here - command should fail
         expect(true).toBe(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Should handle the error gracefully
         expect(error).toBeDefined();
       } finally {

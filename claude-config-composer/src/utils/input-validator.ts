@@ -22,7 +22,7 @@ const SafeString = z
   .min(1, 'String cannot be empty')
   .max(1000, 'String too long')
   .refine(
-    str => !/[\0-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(str),
+    str => !/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(str),
     'String contains invalid control characters'
   );
 
@@ -32,7 +32,7 @@ const SafeLongString = z
   .min(1, 'String cannot be empty')
   .max(50000, 'String too long')
   .refine(
-    str => !/[\0-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(str),
+    str => !/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(str),
     'String contains invalid control characters'
   );
 
@@ -451,7 +451,7 @@ export class InputValidator {
     }
 
     // Remove null bytes and control characters
-    const sanitized = input.replace(/[\0-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    const sanitized = input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
 
     // Validate the sanitized string
     return SafeString.parse(sanitized);
