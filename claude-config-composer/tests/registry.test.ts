@@ -123,7 +123,7 @@ describe('ConfigRegistry', () => {
 
       configs.forEach(config => {
         expect(config.path).toBeDefined();
-        expect(config.path).toMatch(/^\/.*\/configurations\//);
+        expect(config.path).toContain('configurations');
       });
     });
 

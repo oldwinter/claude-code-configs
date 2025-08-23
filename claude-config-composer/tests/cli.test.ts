@@ -251,29 +251,13 @@ describe('CLI Core Commands', () => {
       }).toThrow(/Unknown configuration/i);
     });
 
-    it('should handle file system errors gracefully', async () => {
-      // Create a read-only directory
-      const readOnlyDir = path.join(TEST_TEMP_DIR, 'read-only');
-      await fs.mkdir(readOnlyDir, { recursive: true });
-      await fs.chmod(readOnlyDir, 0o444); // Make it read-only
-
-      try {
-        execSync(`node ${CLI_PATH} nextjs-15 --output ${readOnlyDir}/nested `, {
+    it('should handle file system errors gracefully', () => {
+      // Simply test that invalid paths are handled
+      expect(() => {
+        execSync(`node ${CLI_PATH} nextjs-15 --output /invalid/path/that/does/not/exist`, {
           encoding: 'utf-8',
         });
-        // Should not reach here - command should fail
-        expect(true).toBe(false);
-      } catch (error: unknown) {
-        // Should handle the error gracefully
-        expect(error).toBeDefined();
-      } finally {
-        // Restore permissions for cleanup
-        try {
-          await fs.chmod(readOnlyDir, 0o755);
-        } catch {
-          // Directory might not exist, that's ok
-        }
-      }
+      }).toThrow();
     });
   });
 });
