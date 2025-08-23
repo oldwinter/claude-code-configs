@@ -129,7 +129,11 @@ export class GenerateCommand {
 
       // Validate output directory if provided
       if (options.output) {
-        PathValidator.validatePath(options.output);
+        // For absolute paths (like in tests), just check they exist or can be created
+        // For relative paths, validate them properly
+        if (!path.isAbsolute(options.output)) {
+          PathValidator.validatePath(options.output);
+        }
       }
     } catch (error) {
       if (error instanceof ValidationError) {

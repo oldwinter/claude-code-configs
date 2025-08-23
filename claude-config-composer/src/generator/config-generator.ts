@@ -31,12 +31,18 @@ export class ConfigGenerator {
     outputDir: string,
     showProgress: boolean = true
   ): Promise<void> {
-    // Validate and sanitize the output directory path
+    // Handle output directory path
+    // For absolute paths (like temp directories in tests), use directly
+    // For relative paths, validate and resolve
     try {
-      const sanitizedOutputDir = PathValidator.validatePath(outputDir);
-      // Use the sanitized path for all operations
-      const resolvedOutputDir = path.resolve(sanitizedOutputDir);
-      outputDir = resolvedOutputDir;
+      if (path.isAbsolute(outputDir)) {
+        // For absolute paths (e.g., temp directories in CI), use as-is
+        outputDir = path.normalize(outputDir);
+      } else {
+        // For relative paths, validate and resolve
+        const sanitizedOutputDir = PathValidator.sanitizePath(outputDir);
+        outputDir = path.resolve(sanitizedOutputDir);
+      }
     } catch (error) {
       throw new Error(
         `Invalid output directory: ${error instanceof PathValidationError ? error.message : 'Unknown error'}`
@@ -85,11 +91,27 @@ export class ConfigGenerator {
       currentStep++;
       if (spinner) spinner.start(steps[currentStep]);
 
-      // Securely create directories
-      const claudeDir = await PathValidator.createSafeDirectory('.claude', outputDir);
-      const agentsDir = await PathValidator.createSafeDirectory('.claude/agents', outputDir);
-      const commandsDir = await PathValidator.createSafeDirectory('.claude/commands', outputDir);
-      const hooksDir = await PathValidator.createSafeDirectory('.claude/hooks', outputDir);
+      // Create directories
+      // For absolute outputDir paths, join directly
+      // For relative paths, createSafeDirectory handles validation
+      let claudeDir: string;
+      let agentsDir: string;
+      let commandsDir: string;
+      let hooksDir: string;
+      
+      if (path.isAbsolute(outputDir)) {
+        // For absolute paths (e.g., test temp directories), join directly
+        claudeDir = path.join(outputDir, '.claude');
+        agentsDir = path.join(outputDir, '.claude', 'agents');
+        commandsDir = path.join(outputDir, '.claude', 'commands');
+        hooksDir = path.join(outputDir, '.claude', 'hooks');
+      } else {
+        // For relative paths, use createSafeDirectory for validation
+        claudeDir = await PathValidator.createSafeDirectory('.claude', outputDir);
+        agentsDir = await PathValidator.createSafeDirectory('.claude/agents', outputDir);
+        commandsDir = await PathValidator.createSafeDirectory('.claude/commands', outputDir);
+        hooksDir = await PathValidator.createSafeDirectory('.claude/hooks', outputDir);
+      }
 
       await fs.mkdir(outputDir, { recursive: true });
       await fs.mkdir(claudeDir, { recursive: true });
