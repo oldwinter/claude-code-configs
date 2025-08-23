@@ -1,11 +1,11 @@
 import { createReadStream, createWriteStream } from 'fs';
 import fs from 'fs/promises';
-import { pipeline } from 'stream/promises';
 import { Transform } from 'stream';
+import { pipeline } from 'stream/promises';
 
 /**
  * Streaming utilities for handling large files efficiently
- * 
+ *
  * These utilities provide memory-efficient file operations by processing
  * data in chunks rather than loading entire files into memory.
  */
@@ -46,7 +46,7 @@ export interface StreamingOptions {
 
 /**
  * Check if a file should be processed using streaming based on size
- * 
+ *
  * @param filePath - Path to the file to check
  * @returns Promise resolving to true if file should be streamed
  */
@@ -62,12 +62,12 @@ export async function shouldUseStreaming(filePath: string): Promise<boolean> {
 
 /**
  * Stream-based file copying with progress tracking
- * 
+ *
  * @param sourcePath - Source file path
  * @param destinationPath - Destination file path
  * @param options - Streaming options
  * @returns Promise that resolves when copying is complete
- * 
+ *
  * @example
  * ```typescript
  * await streamCopyFile('./large-file.md', './backup/large-file.md', {
@@ -83,7 +83,7 @@ export async function streamCopyFile(
   options: StreamingOptions = {}
 ): Promise<void> {
   const { chunkSize = CHUNK_SIZE, onProgress } = options;
-  
+
   const stats = await fs.stat(sourcePath);
   const totalSize = stats.size;
   let processedSize = 0;
@@ -91,17 +91,17 @@ export async function streamCopyFile(
   const progressTransform = new Transform({
     transform(chunk, _encoding, callback) {
       processedSize += chunk.length;
-      
+
       if (onProgress) {
         onProgress({
           total: totalSize,
           processed: processedSize,
-          percentage: Math.round((processedSize / totalSize) * 100)
+          percentage: Math.round((processedSize / totalSize) * 100),
         });
       }
-      
+
       callback(null, chunk);
-    }
+    },
   });
 
   const readStream = createReadStream(sourcePath, { highWaterMark: chunkSize });
@@ -112,12 +112,12 @@ export async function streamCopyFile(
 
 /**
  * Stream-based file reading with processing
- * 
+ *
  * @param filePath - Path to the file to read
  * @param processor - Function to process each chunk
  * @param options - Streaming options
  * @returns Promise that resolves when processing is complete
- * 
+ *
  * @example
  * ```typescript
  * let lineCount = 0;
@@ -132,7 +132,7 @@ export async function streamProcessFile<T = void>(
   options: StreamingOptions = {}
 ): Promise<void> {
   const { chunkSize = CHUNK_SIZE, onProgress } = options;
-  
+
   const stats = await fs.stat(filePath);
   const totalSize = stats.size;
   let processedSize = 0;
@@ -141,14 +141,14 @@ export async function streamProcessFile<T = void>(
 
   for await (const chunk of readStream) {
     await processor(chunk);
-    
+
     processedSize += chunk.length;
-    
+
     if (onProgress) {
       onProgress({
         total: totalSize,
         processed: processedSize,
-        percentage: Math.round((processedSize / totalSize) * 100)
+        percentage: Math.round((processedSize / totalSize) * 100),
       });
     }
   }
@@ -157,11 +157,11 @@ export async function streamProcessFile<T = void>(
 /**
  * Memory-efficient file reading that automatically chooses between
  * streaming and full-file reading based on file size
- * 
+ *
  * @param filePath - Path to the file to read
  * @param options - Streaming options
  * @returns Promise resolving to file contents as string
- * 
+ *
  * @example
  * ```typescript
  * const content = await smartReadFile('./config.md', {
@@ -173,8 +173,8 @@ export async function smartReadFile(
   filePath: string,
   options: StreamingOptions = {}
 ): Promise<string> {
-  const useStreaming = options.forceStreaming || await shouldUseStreaming(filePath);
-  
+  const useStreaming = options.forceStreaming || (await shouldUseStreaming(filePath));
+
   if (!useStreaming) {
     // For small files, use regular file reading
     return fs.readFile(filePath, 'utf-8');
@@ -182,10 +182,14 @@ export async function smartReadFile(
 
   // For large files, use streaming
   const chunks: Buffer[] = [];
-  
-  await streamProcessFile(filePath, (chunk) => {
-    chunks.push(chunk);
-  }, options);
+
+  await streamProcessFile(
+    filePath,
+    chunk => {
+      chunks.push(chunk);
+    },
+    options
+  );
 
   return Buffer.concat(chunks).toString('utf-8');
 }
@@ -193,12 +197,12 @@ export async function smartReadFile(
 /**
  * Memory-efficient file writing that automatically chooses between
  * streaming and direct writing based on content size
- * 
+ *
  * @param filePath - Path where to write the file
  * @param content - Content to write
  * @param options - Streaming options
  * @returns Promise that resolves when writing is complete
- * 
+ *
  * @example
  * ```typescript
  * await smartWriteFile('./large-output.md', largeContent, {
@@ -213,7 +217,7 @@ export async function smartWriteFile(
 ): Promise<void> {
   const contentSize = Buffer.byteLength(content, 'utf-8');
   const useStreaming = options.forceStreaming || contentSize > STREAMING_THRESHOLD;
-  
+
   if (!useStreaming) {
     // For small content, use regular file writing
     return fs.writeFile(filePath, content, 'utf-8');
@@ -222,12 +226,12 @@ export async function smartWriteFile(
   // For large content, use streaming
   const { chunkSize = CHUNK_SIZE, onProgress } = options;
   const writeStream = createWriteStream(filePath);
-  
+
   let processedSize = 0;
   const totalSize = contentSize;
 
   const contentBuffer = Buffer.from(content, 'utf-8');
-  
+
   return new Promise((resolve, reject) => {
     writeStream.on('error', reject);
     writeStream.on('finish', resolve);
@@ -241,19 +245,19 @@ export async function smartWriteFile(
       const remainingSize = totalSize - processedSize;
       const currentChunkSize = Math.min(chunkSize, remainingSize);
       const chunk = contentBuffer.subarray(processedSize, processedSize + currentChunkSize);
-      
+
       processedSize += currentChunkSize;
-      
+
       if (onProgress) {
         onProgress({
           total: totalSize,
           processed: processedSize,
-          percentage: Math.round((processedSize / totalSize) * 100)
+          percentage: Math.round((processedSize / totalSize) * 100),
         });
       }
 
       const needsDrain = !writeStream.write(chunk);
-      
+
       if (needsDrain) {
         writeStream.once('drain', writeChunk);
       } else {
@@ -268,12 +272,12 @@ export async function smartWriteFile(
 
 /**
  * Batch processor for handling multiple files efficiently
- * 
+ *
  * @param filePaths - Array of file paths to process
  * @param processor - Function to process each file
  * @param options - Processing options
  * @returns Promise that resolves when all files are processed
- * 
+ *
  * @example
  * ```typescript
  * await batchProcessFiles(
@@ -289,8 +293,8 @@ export async function smartWriteFile(
 export async function batchProcessFiles<T = void>(
   filePaths: string[],
   processor: (filePath: string, content: string) => Promise<T> | T,
-  options: { 
-    concurrency?: number; 
+  options: {
+    concurrency?: number;
     onProgress?: (completed: number, total: number) => void;
   } = {}
 ): Promise<T[]> {
@@ -301,16 +305,16 @@ export async function batchProcessFiles<T = void>(
   // Process files in batches to control memory usage
   for (let i = 0; i < filePaths.length; i += concurrency) {
     const batch = filePaths.slice(i, i + concurrency);
-    
-    const batchPromises = batch.map(async (filePath) => {
+
+    const batchPromises = batch.map(async filePath => {
       const content = await smartReadFile(filePath);
       const result = await processor(filePath, content);
-      
+
       completed++;
       if (onProgress) {
         onProgress(completed, filePaths.length);
       }
-      
+
       return result;
     });
 
@@ -323,7 +327,7 @@ export async function batchProcessFiles<T = void>(
 
 /**
  * Get memory usage information
- * 
+ *
  * @returns Object with memory usage statistics
  */
 export function getMemoryUsage() {
@@ -339,7 +343,7 @@ export function getMemoryUsage() {
 
 /**
  * Monitor memory usage and warn if it gets too high
- * 
+ *
  * @param threshold - Memory threshold in MB (default: 500MB)
  * @param callback - Optional callback when threshold is exceeded
  */
@@ -349,12 +353,14 @@ export function monitorMemoryUsage(
 ): () => void {
   const interval = setInterval(() => {
     const usage = getMemoryUsage();
-    
+
     if (usage.heapUsed > threshold) {
       if (callback) {
         callback(usage);
       } else {
-        console.warn(`⚠️  High memory usage detected: ${usage.heapUsed}MB (threshold: ${threshold}MB)`);
+        console.warn(
+          `⚠️  High memory usage detected: ${usage.heapUsed}MB (threshold: ${threshold}MB)`
+        );
       }
     }
   }, 5000); // Check every 5 seconds

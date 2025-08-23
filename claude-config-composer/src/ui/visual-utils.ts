@@ -1,11 +1,11 @@
 import chalk from 'chalk';
 import type {
-  OptionalGradientString,
-  OptionalFiglet,
   OptionalBoxen,
   OptionalChalkAnimation,
-  OptionalCreateSpinner,
   OptionalCliProgress,
+  OptionalCreateSpinner,
+  OptionalFiglet,
+  OptionalGradientString,
   OptionalTerminalLink,
 } from '../types/optional-deps';
 
@@ -45,7 +45,10 @@ try {
 }
 
 // Helper function to create gradient or fallback
-function createGradientOrFallback(colors: string[], fallbackColor: string): (text: string) => string {
+function createGradientOrFallback(
+  colors: string[],
+  fallbackColor: string
+): (text: string) => string {
   if (gradient && typeof gradient === 'function') {
     try {
       const gradientFn = gradient as any;

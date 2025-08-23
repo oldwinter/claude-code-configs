@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
   PathValidationError,
+  PathValidator,
   validateConfigId as pathValidateConfigId,
   validateFilename as pathValidateFilename,
   validatePath as pathValidatePath,
-  PathValidator,
 } from './path-validator';
 
 /**

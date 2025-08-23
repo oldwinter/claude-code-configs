@@ -12,9 +12,9 @@ import {
 } from '../../utils/error-handler';
 import { InputValidator } from '../../utils/input-validator';
 import { PathValidationError, PathValidator } from '../../utils/path-validator';
+import { createSpinner } from '../../utils/simple-spinner';
 import { BackupUtils } from '../utils/backup';
 import { DisplayUtils } from '../utils/display';
-import { createSpinner } from '../../utils/simple-spinner';
 
 export interface GenerateOptions {
   output?: string;
@@ -149,7 +149,10 @@ export class GenerateCommand {
   /**
    * Get the appropriate output directory
    */
-  private static async getOutputDirectory(configs: string[], options: GenerateOptions): Promise<string> {
+  private static async getOutputDirectory(
+    configs: string[],
+    options: GenerateOptions
+  ): Promise<string> {
     // Validate configs array
     try {
       InputValidator.validateArrayBounds(configs, 1, 10, 'configuration');
@@ -215,7 +218,7 @@ export class GenerateCommand {
         // Current directory always exists, no need to create it
         return;
       }
-      
+
       // Validate the directory path before creating
       const validatedPath = PathValidator.validatePath(dirPath);
       if (validatedPath) {

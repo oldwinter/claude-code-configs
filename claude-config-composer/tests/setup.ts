@@ -1,17 +1,15 @@
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
-import crypto from 'crypto';
+import { afterAll, beforeAll } from 'vitest';
 
 // Polyfill for crypto.getRandomValues for Node < 19
 if (!globalThis.crypto) {
   globalThis.crypto = crypto as any;
 }
 if (!globalThis.crypto.getRandomValues) {
-  globalThis.crypto.getRandomValues = function(array: any) {
-    return crypto.randomFillSync(array);
-  };
+  globalThis.crypto.getRandomValues = (array: any) => crypto.randomFillSync(array);
 }
 
 export const TEST_TEMP_DIR = path.join(os.tmpdir(), 'claude-config-test');
@@ -42,7 +40,7 @@ afterAll(async () => {
   // Clean up temp directories
   try {
     await fs.rm(TEST_TEMP_DIR, { recursive: true, force: true });
-  } catch (error) {
+  } catch (_error) {
     // Ignore cleanup errors
   }
 });

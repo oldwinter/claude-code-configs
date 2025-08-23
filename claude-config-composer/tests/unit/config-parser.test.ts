@@ -18,7 +18,7 @@ describe('ConfigParser Unit Tests', () => {
       expect(config).toBeDefined();
       expect(config.claudeMd).toBeDefined();
       expect(config.claudeMd).not.toBeNull();
-      expect(config.claudeMd!.length).toBeGreaterThan(1000);
+      expect(config.claudeMd?.length).toBeGreaterThan(1000);
 
       // Should contain expected Next.js content
       expect(config.claudeMd).toContain('Next.js 15');
@@ -121,7 +121,7 @@ describe('ConfigParser Unit Tests', () => {
 
       for (const command of commandsWithArgs) {
         expect(typeof command.argumentHint).toBe('string');
-        expect(command.argumentHint!.length).toBeGreaterThan(0);
+        expect(command.argumentHint?.length).toBeGreaterThan(0);
       }
     });
 
@@ -207,7 +207,7 @@ describe('ConfigParser Unit Tests', () => {
     it('should handle missing CLAUDE.md file gracefully', async () => {
       // Create a temporary directory without CLAUDE.md
       const tempDir = path.join(__dirname, '../temp-no-claude');
-      
+
       try {
         await fs.mkdir(tempDir, { recursive: true });
 
@@ -246,14 +246,14 @@ Content here`
         );
 
         const content = await fs.readFile(tempFile, 'utf-8');
-        const result = configParser['parseCommand'](content, 'bad-yaml.md', tempDir);
+        const result = configParser.parseCommand(content, 'bad-yaml.md', tempDir);
 
         // Should handle gracefully - either return null or return with defaults
         expect(result).toBeNull();
       } finally {
         try {
           await fs.rm(tempDir, { recursive: true, force: true });
-        } catch (error) {
+        } catch (_error) {
           // Ignore cleanup errors
         }
       }
@@ -275,7 +275,7 @@ Content here`
       } finally {
         try {
           await fs.rm(tempDir, { recursive: true, force: true });
-        } catch (error) {
+        } catch (_error) {
           // Ignore cleanup errors
         }
       }

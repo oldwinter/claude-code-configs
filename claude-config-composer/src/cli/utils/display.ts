@@ -1,23 +1,23 @@
 import chalk from 'chalk';
 import type {
-  OptionalGradientString,
-  OptionalCFonts,
   OptionalBoxen,
+  OptionalCFonts,
+  OptionalGradientString,
   OptionalNodeEmoji,
 } from '../../types/optional-deps';
 
 // Try to load fancy visual dependencies if available
 let hasVisuals = false;
-let gradient: OptionalGradientString;
+let _gradient: OptionalGradientString;
 let CFonts: OptionalCFonts;
 let boxen: OptionalBoxen;
-let emoji: OptionalNodeEmoji;
+let _emoji: OptionalNodeEmoji;
 
 try {
-  gradient = require('gradient-string');
+  _gradient = require('gradient-string');
   CFonts = require('cfonts');
   boxen = require('boxen');
-  emoji = require('node-emoji');
+  _emoji = require('node-emoji');
   hasVisuals = true;
 } catch {
   // Optional dependencies not available, use basic mode

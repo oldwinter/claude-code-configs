@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import type {
-  OptionalGradientString,
-  OptionalCFonts,
-  OptionalNodeEmoji,
   OptionalBoxen,
+  OptionalCFonts,
+  OptionalGradientString,
+  OptionalNodeEmoji,
 } from '../types/optional-deps';
 
 // Try to load optional visual dependencies with fallbacks
@@ -118,9 +118,7 @@ export function createLoadingBar(title: string) {
     } else {
       gradientTitle = chalk.hex('#EB6359')(title);
     }
-    process.stdout.write(
-      `\r${gradientTitle} ${frame} ${Math.floor((i / frames.length) * 100)}%`
-    );
+    process.stdout.write(`\r${gradientTitle} ${frame} ${Math.floor((i / frames.length) * 100)}%`);
     i++;
   }, 100);
 

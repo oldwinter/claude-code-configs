@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { z } from 'zod';
-import { InputValidator } from '../utils/input-validator';
 import { PathValidationError, PathValidator } from '../utils/path-validator';
 
 // Legacy schema for backward compatibility - use SecureConfigMetadataSchema for new code
@@ -49,9 +48,10 @@ export class ConfigRegistry {
       const moduleDir = path.dirname(path.dirname(__dirname)); // Go up from dist/registry/ to project root
 
       // First, try to find configurations in the package (npm install case)
-      const packageConfigs = path.resolve(moduleDir, 'configurations');
+      // Use path.join instead of resolve to avoid process.cwd()
+      const packageConfigs = path.join(moduleDir, 'configurations');
       // Second, try parent directory (local development case)
-      const parentConfigs = path.resolve(moduleDir, '..', 'configurations');
+      const parentConfigs = path.join(moduleDir, '..', 'configurations');
 
       // Check which path exists and validate it
       if (require('fs').existsSync(packageConfigs)) {

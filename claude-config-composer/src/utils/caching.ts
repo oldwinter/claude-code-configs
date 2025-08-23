@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 
 /**
  * Caching utilities for improving performance of repeated operations
- * 
+ *
  * This module provides file-based caching with automatic expiration,
  * cache invalidation, and memory management.
  */
@@ -50,7 +50,7 @@ const DEFAULT_CACHE_OPTIONS: Required<CacheOptions> = {
   defaultTTL: 60 * 60 * 1000, // 1 hour
   maxSizeBytes: 100 * 1024 * 1024, // 100MB
   compress: true,
-  version: '1.0.0'
+  version: '1.0.0',
 };
 
 /**
@@ -66,7 +66,7 @@ class MemoryCache<T = unknown> {
 
   get(key: string): T | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -97,7 +97,7 @@ class MemoryCache<T = unknown> {
       timestamp: now,
       expiresAt,
       version: DEFAULT_CACHE_OPTIONS.version,
-      inputHash: ''
+      inputHash: '',
     });
   }
 
@@ -132,7 +132,7 @@ export class FileCache {
 
   /**
    * Generate a cache key from input data
-   * 
+   *
    * @param input - Input data to hash
    * @returns Cache key string
    */
@@ -143,7 +143,7 @@ export class FileCache {
 
   /**
    * Get cache file path for a given key
-   * 
+   *
    * @param key - Cache key
    * @returns Full path to cache file
    */
@@ -157,17 +157,17 @@ export class FileCache {
   private async ensureCacheDir(): Promise<void> {
     try {
       await fs.mkdir(this.options.cacheDir, { recursive: true });
-    } catch (error) {
+    } catch (_error) {
       // Directory already exists or creation failed - non-fatal
     }
   }
 
   /**
    * Get data from cache
-   * 
+   *
    * @param key - Cache key or input to generate key from
    * @returns Cached data or null if not found/expired
-   * 
+   *
    * @example
    * ```typescript
    * const cache = new FileCache();
@@ -181,7 +181,7 @@ export class FileCache {
    */
   async get<T = unknown>(key: string | Record<string, unknown>): Promise<T | null> {
     const cacheKey = typeof key === 'string' ? key : this.generateKey(key);
-    
+
     // Check memory cache first
     const memoryResult = this.memoryCache.get(cacheKey);
     if (memoryResult) {
@@ -217,11 +217,11 @@ export class FileCache {
 
   /**
    * Store data in cache
-   * 
+   *
    * @param key - Cache key or input to generate key from
    * @param data - Data to cache
    * @param ttl - Time to live in milliseconds (optional)
-   * 
+   *
    * @example
    * ```typescript
    * const cache = new FileCache();
@@ -247,13 +247,13 @@ export class FileCache {
       timestamp: now,
       expiresAt,
       version: this.options.version,
-      inputHash
+      inputHash,
     };
 
     try {
       const filePath = this.getCacheFilePath(cacheKey);
       await fs.writeFile(filePath, JSON.stringify(entry), 'utf-8');
-      
+
       // Also cache in memory
       this.memoryCache.set(cacheKey, data, ttl);
     } catch (error) {
@@ -262,20 +262,21 @@ export class FileCache {
     }
 
     // Clean up old cache files periodically
-    if (Math.random() < 0.1) { // 10% chance to trigger cleanup
+    if (Math.random() < 0.1) {
+      // 10% chance to trigger cleanup
       setImmediate(() => this.cleanup());
     }
   }
 
   /**
    * Delete a cache entry
-   * 
+   *
    * @param key - Cache key or input to generate key from
    * @returns True if entry was deleted, false if not found
    */
   async delete(key: string | Record<string, unknown>): Promise<boolean> {
     const cacheKey = typeof key === 'string' ? key : this.generateKey(key);
-    
+
     // Remove from memory cache
     this.memoryCache.delete(cacheKey);
 
@@ -299,7 +300,7 @@ export class FileCache {
       const deletePromises = files
         .filter(file => file.endsWith('.json'))
         .map(file => fs.unlink(path.join(this.options.cacheDir, file)));
-      
+
       await Promise.all(deletePromises);
     } catch {
       // Directory doesn't exist or is empty
@@ -320,7 +321,7 @@ export class FileCache {
       // Get file stats
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
-        
+
         const filePath = path.join(this.options.cacheDir, file);
         try {
           const stats = await fs.stat(filePath);
@@ -328,14 +329,14 @@ export class FileCache {
           fileStats.push({
             path: filePath,
             size: stats.size,
-            mtime: stats.mtime.getTime()
+            mtime: stats.mtime.getTime(),
           });
 
           // Check if file is expired
           try {
             const content = await fs.readFile(filePath, 'utf-8');
             const entry: CacheEntry = JSON.parse(content);
-            
+
             if (now > entry.expiresAt || entry.version !== this.options.version) {
               await fs.unlink(filePath);
               totalSize -= stats.size;
@@ -358,7 +359,7 @@ export class FileCache {
 
         for (const fileInfo of sortedFiles) {
           if (totalSize <= this.options.maxSizeBytes) break;
-          
+
           try {
             await fs.unlink(fileInfo.path);
             totalSize -= fileInfo.size;
@@ -374,7 +375,7 @@ export class FileCache {
 
   /**
    * Get cache statistics
-   * 
+   *
    * @returns Cache usage statistics
    */
   async stats(): Promise<{
@@ -398,7 +399,7 @@ export class FileCache {
 
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
-        
+
         const filePath = path.join(this.options.cacheDir, file);
         try {
           const stats = await fs.stat(filePath);
@@ -420,13 +421,13 @@ export class FileCache {
       return {
         totalFiles: validFiles,
         totalSizeBytes: totalSize,
-        totalSizeMB: Math.round(totalSize / 1024 / 1024 * 100) / 100,
+        totalSizeMB: Math.round((totalSize / 1024 / 1024) * 100) / 100,
         oldestEntry,
         newestEntry,
         memoryCache: {
           size: this.memoryCache.size(),
-          keys: this.memoryCache.keys()
-        }
+          keys: this.memoryCache.keys(),
+        },
       };
     } catch {
       return {
@@ -437,8 +438,8 @@ export class FileCache {
         newestEntry: null,
         memoryCache: {
           size: this.memoryCache.size(),
-          keys: this.memoryCache.keys()
-        }
+          keys: this.memoryCache.keys(),
+        },
       };
     }
   }
@@ -451,7 +452,7 @@ let globalCache: FileCache | null = null;
 
 /**
  * Get the global cache instance
- * 
+ *
  * @param options - Cache options (only used on first call)
  * @returns Global cache instance
  */
@@ -464,11 +465,11 @@ export function getGlobalCache(options?: CacheOptions): FileCache {
 
 /**
  * Memoization decorator for caching function results
- * 
+ *
  * @param fn - Function to memoize
  * @param options - Cache options
  * @returns Memoized function
- * 
+ *
  * @example
  * ```typescript
  * const expensiveFunction = memoize(async (input: string) => {
@@ -476,10 +477,10 @@ export function getGlobalCache(options?: CacheOptions): FileCache {
  *   await new Promise(resolve => setTimeout(resolve, 1000));
  *   return input.toUpperCase();
  * }, { defaultTTL: 5 * 60 * 1000 }); // Cache for 5 minutes
- * 
+ *
  * // First call: computes result
  * const result1 = await expensiveFunction('hello');
- * 
+ *
  * // Second call: returns cached result
  * const result2 = await expensiveFunction('hello');
  * ```
@@ -492,7 +493,7 @@ export function memoize<TArgs extends unknown[], TReturn>(
 
   return async (...args: TArgs): Promise<TReturn> => {
     const key = { function: fn.name, args };
-    
+
     // Try to get from cache
     const cached = await cache.get<TReturn>(key);
     if (cached !== null) {
@@ -502,7 +503,7 @@ export function memoize<TArgs extends unknown[], TReturn>(
     // Compute result and cache it
     const result = await fn(...args);
     await cache.set(key, result);
-    
+
     return result;
   };
 }
@@ -514,7 +515,7 @@ export const CacheKey = {
   /**
    * Generate cache key for configuration parsing
    */
-  configParse: (configPath: string, lastModified: number) => 
+  configParse: (configPath: string, lastModified: number) =>
     `config-parse:${configPath}:${lastModified}`,
 
   /**
@@ -533,5 +534,5 @@ export const CacheKey = {
    * Generate cache key for validation
    */
   validation: (targetPath: string, lastModified: number) =>
-    `validation:${targetPath}:${lastModified}`
+    `validation:${targetPath}:${lastModified}`,
 };

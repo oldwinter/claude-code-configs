@@ -5,15 +5,9 @@ import { ComponentMerger } from '../merger/component-merger';
 import { ConfigMerger } from '../merger/config-merger';
 import { ConfigParser } from '../parser/config-parser';
 import type { ConfigMetadata } from '../registry/config-registry';
-import {
-  ErrorHandler,
-  FileSystemError,
-  GenerationError,
-  ValidationError,
-} from '../utils/error-handler';
 import { InputValidator } from '../utils/input-validator';
-import { PathValidationError, PathValidator } from '../utils/path-validator';
-import { createSpinner, SimpleSpinner } from '../utils/simple-spinner';
+import { PathValidator } from '../utils/path-validator';
+import { createSpinner } from '../utils/simple-spinner';
 
 export class ConfigGenerator {
   private parser: ConfigParser;
@@ -37,7 +31,7 @@ export class ConfigGenerator {
     if (!outputDir) {
       outputDir = '.';
     }
-    
+
     // Normalize the path - this works for both absolute and relative paths
     // and doesn't require process.cwd()
     outputDir = path.normalize(outputDir);
@@ -91,7 +85,7 @@ export class ConfigGenerator {
       let agentsDir: string;
       let commandsDir: string;
       let hooksDir: string;
-      
+
       if (path.isAbsolute(outputDir)) {
         // For absolute paths (e.g., test temp directories), join directly
         claudeDir = path.join(outputDir, '.claude');
@@ -206,12 +200,12 @@ export class ConfigGenerator {
 
       // Validate the merged settings
       const validatedSettings = InputValidator.validateSettings(mergedSettings);
-      
+
       // Debug: log validated settings
       if (process.env.DEBUG) {
         console.log('Validated settings:', JSON.stringify(validatedSettings, null, 2));
       }
-      
+
       const settingsPath = await PathValidator.createSafeFilePath(
         'settings.json',
         '.claude',
@@ -280,11 +274,15 @@ export class ConfigGenerator {
     try {
       await fs.access(settingsPath);
       const settingsContent = await fs.readFile(settingsPath, 'utf-8');
-      const settings = JSON.parse(settingsContent);
+      const _settings = JSON.parse(settingsContent);
       // Don't check for _metadata as it's not part of the Claude Code settings.json schema
       // Just verify the JSON is valid
     } catch (error) {
-      if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error as NodeJS.ErrnoException).code === 'ENOENT'
+      ) {
         errors.push('Missing .claude/settings.json');
       } else {
         errors.push('Invalid settings.json format');
@@ -293,5 +291,4 @@ export class ConfigGenerator {
 
     return { valid: errors.length === 0, errors };
   }
-
 }

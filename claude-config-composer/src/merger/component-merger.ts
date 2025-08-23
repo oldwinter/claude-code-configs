@@ -1,27 +1,27 @@
 import yaml from 'js-yaml';
 import type { Agent, Command, Hook, Settings } from '../parser/config-parser';
-import type { HooksConfig, StatusLine, HookEntry, HookCommand } from '../types/config';
+import type { HookCommand, HookEntry, HooksConfig, StatusLine } from '../types/config';
 
 /**
  * Handles the intelligent merging of configuration components from multiple sources
- * 
+ *
  * This class provides sophisticated merging logic for:
  * - AI agents with tool combination and conflict resolution
  * - Commands with override and deduplication strategies
  * - Hooks with script combination and execution order
  * - Settings with deep merging and permission handling
- * 
+ *
  * @example
  * ```typescript
  * const merger = new ComponentMerger();
- * 
+ *
  * // Merge agents from multiple configurations
  * const agents = merger.mergeAgents([
  *   nextjsAgents,
  *   shadcnAgents,
  *   customAgents
  * ]);
- * 
+ *
  * // Generate final agent files
  * agents.forEach(agent => {
  *   const content = merger.generateAgentFile(agent);
@@ -32,13 +32,13 @@ import type { HooksConfig, StatusLine, HookEntry, HookCommand } from '../types/c
 export class ComponentMerger {
   /**
    * Merges agent configurations from multiple sources with intelligent deduplication
-   * 
+   *
    * Agents with similar names are merged by combining their tools and content.
    * Later configurations take precedence for metadata like descriptions.
-   * 
+   *
    * @param agentGroups - Array of agent arrays from different configurations
    * @returns Merged and deduplicated array of agents
-   * 
+   *
    * @example
    * ```typescript
    * const merger = new ComponentMerger();
@@ -61,7 +61,7 @@ export class ComponentMerger {
         } else {
           // Merge similar agents by combining their content
           const existing = mergedAgents.get(key);
-      if (!existing) continue;
+          if (!existing) continue;
           const merged = this.mergeAgent(existing, agent);
           mergedAgents.set(key, merged);
         }
@@ -133,7 +133,6 @@ export class ComponentMerger {
     return Array.from(mergedHooks.values());
   }
 
-
   mergeSettings(settingsArray: (Settings | null)[]): Settings {
     const merged: Settings = {
       permissions: {
@@ -202,7 +201,7 @@ export class ComponentMerger {
       ];
       for (const prop of otherProps) {
         if (settings[prop]) {
-          const currentValue = merged[prop] as Record<string, unknown> || {};
+          const currentValue = (merged[prop] as Record<string, unknown>) || {};
           merged[prop] = this.deepMerge(currentValue, settings[prop] as Record<string, unknown>);
         }
       }
@@ -234,31 +233,38 @@ export class ComponentMerger {
 
     // All hook types that might appear in configurations
     const hookTypes = [
-      'PreToolUse', 'PostToolUse', 'Stop', 'UserPromptSubmit', 
-      'Notification', 'SubagentStop', 'SessionEnd', 'SessionStart', 'PreCompact'
+      'PreToolUse',
+      'PostToolUse',
+      'Stop',
+      'UserPromptSubmit',
+      'Notification',
+      'SubagentStop',
+      'SessionEnd',
+      'SessionStart',
+      'PreCompact',
     ];
-    
+
     for (const type of hookTypes) {
       const entries1 = hooks1[type] || [];
       const entries2 = hooks2[type] || [];
-      
+
       if (entries1.length > 0 || entries2.length > 0) {
         const mergedEntries: HookEntry[] = [];
-        
+
         // Process entries from hooks1
         for (const entry of entries1) {
           if (this.isValidHookEntry(entry)) {
             mergedEntries.push(this.normalizeHookEntry(entry));
           }
         }
-        
+
         // Process entries from hooks2
         for (const entry of entries2) {
           if (this.isValidHookEntry(entry)) {
             mergedEntries.push(this.normalizeHookEntry(entry));
           }
         }
-        
+
         if (mergedEntries.length > 0) {
           merged[type] = mergedEntries;
         }
@@ -267,28 +273,28 @@ export class ComponentMerger {
 
     return merged;
   }
-  
+
   private isValidHookEntry(entry: any): boolean {
     return entry && typeof entry === 'object' && 'hooks' in entry && Array.isArray(entry.hooks);
   }
-  
+
   private normalizeHookEntry(entry: any): HookEntry {
     const normalized: HookEntry = {
-      hooks: []
+      hooks: [],
     };
-    
+
     // Only include matcher if it exists and is not empty
     if (entry.matcher && entry.matcher !== '') {
       normalized.matcher = entry.matcher;
     }
-    
+
     // Process hooks array
     if (Array.isArray(entry.hooks)) {
       for (const hook of entry.hooks) {
         if (hook && typeof hook === 'object' && 'command' in hook) {
           const hookCommand: HookCommand = {
             type: hook.type || 'command',
-            command: hook.command
+            command: hook.command,
           };
           if (hook.timeout) {
             hookCommand.timeout = hook.timeout;
@@ -297,11 +303,14 @@ export class ComponentMerger {
         }
       }
     }
-    
+
     return normalized;
   }
 
-  private mergeStatusLine(status1: StatusLine | undefined, status2: StatusLine | undefined): StatusLine | undefined {
+  private mergeStatusLine(
+    status1: StatusLine | undefined,
+    status2: StatusLine | undefined
+  ): StatusLine | undefined {
     if (!status1) return status2;
     if (!status2) return status1;
 
@@ -310,19 +319,29 @@ export class ComponentMerger {
     return status2;
   }
 
-  private deepMerge(obj1: Record<string, unknown>, obj2: Record<string, unknown>): Record<string, unknown> {
+  private deepMerge(
+    obj1: Record<string, unknown>,
+    obj2: Record<string, unknown>
+  ): Record<string, unknown> {
     // Handle arrays separately - return as-is since they're not Record types
     if (Array.isArray(obj1) && Array.isArray(obj2)) {
       return [...obj1, ...obj2] as unknown as Record<string, unknown>;
     }
 
-    if (typeof obj1 === 'object' && typeof obj2 === 'object' && obj1 !== null && obj2 !== null && !Array.isArray(obj1) && !Array.isArray(obj2)) {
+    if (
+      typeof obj1 === 'object' &&
+      typeof obj2 === 'object' &&
+      obj1 !== null &&
+      obj2 !== null &&
+      !Array.isArray(obj1) &&
+      !Array.isArray(obj2)
+    ) {
       const merged: Record<string, unknown> = { ...obj1 };
 
       for (const key in obj2) {
         if (key in merged && typeof merged[key] === 'object' && typeof obj2[key] === 'object') {
           merged[key] = this.deepMerge(
-            merged[key] as Record<string, unknown>, 
+            merged[key] as Record<string, unknown>,
             obj2[key] as Record<string, unknown>
           );
         } else {

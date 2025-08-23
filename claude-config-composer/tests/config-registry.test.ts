@@ -90,7 +90,15 @@ describe('ConfigRegistry', () => {
     it('should have valid categories', async () => {
       await registry.initialize();
       const configs = registry.getAll();
-      const validCategories = ['framework', 'ui', 'tooling', 'testing', 'database', 'api', 'mcp-server'];
+      const validCategories = [
+        'framework',
+        'ui',
+        'tooling',
+        'testing',
+        'database',
+        'api',
+        'mcp-server',
+      ];
 
       configs.forEach(config => {
         expect(validCategories).toContain(config.category);
@@ -185,7 +193,7 @@ describe('ConfigRegistry', () => {
 
       expect(content).toBeDefined();
       expect(typeof content).toBe('string');
-      expect(content!.length).toBeGreaterThan(0);
+      expect(content?.length).toBeGreaterThan(0);
       expect(content).toContain('Next.js 15');
     });
 
@@ -202,7 +210,7 @@ describe('ConfigRegistry', () => {
         const content = await registry.getConfigContent(config.id);
         expect(content).toBeDefined();
         expect(typeof content).toBe('string');
-        expect(content!.length).toBeGreaterThan(0);
+        expect(content?.length).toBeGreaterThan(0);
       }
     });
   });

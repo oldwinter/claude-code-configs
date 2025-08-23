@@ -1,8 +1,16 @@
 import fs from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
+import type {
+  BuildTools,
+  CodeRules,
+  ComponentPatterns,
+  HooksConfig,
+  ImportOrder,
+  StatusLine,
+  TestingFramework,
+} from '../types/config';
 import { ConfigurationError, ErrorHandler, FileSystemError } from '../utils/error-handler';
-import type { HooksConfig, StatusLine, CodeRules, ComponentPatterns, ImportOrder, TestingFramework, BuildTools } from '../types/config';
 
 /**
  * Represents an AI agent configuration with specialized capabilities
@@ -87,14 +95,14 @@ export interface Settings {
 
 /**
  * Parses Claude Code configuration directories and extracts structured components
- * 
+ *
  * This class handles the parsing of:
  * - Agent definitions from markdown files
- * - Command definitions from markdown files  
+ * - Command definitions from markdown files
  * - Hook scripts and configurations
  * - Settings from JSON files
  * - Main CLAUDE.md documentation
- * 
+ *
  * @example
  * ```typescript
  * const parser = new ConfigParser();
@@ -105,17 +113,17 @@ export interface Settings {
 export class ConfigParser {
   /**
    * Parses a complete configuration directory structure
-   * 
+   *
    * @param configPath - Path to the configuration directory to parse
    * @returns Promise resolving to parsed configuration components
    * @throws {FileSystemError} When the directory cannot be accessed
    * @throws {ConfigurationError} When configuration files have invalid format
-   * 
+   *
    * @example
    * ```typescript
    * const parser = new ConfigParser();
    * const config = await parser.parseConfigDirectory('./configurations/nextjs-15');
-   * 
+   *
    * // Access parsed components
    * config.agents.forEach(agent => console.log(agent.name));
    * config.commands.forEach(cmd => console.log(cmd.name));
@@ -146,7 +154,7 @@ export class ConfigParser {
       const hooks: Hook[] = [];
       let settings: Settings | null = null;
       let claudeMd: string | null = null;
-      let dependencies: any = undefined;
+      let dependencies: any;
 
       // Validate config path
       if (!configPath || typeof configPath !== 'string') {
@@ -156,14 +164,21 @@ export class ConfigParser {
       try {
         await fs.access(configPath);
       } catch (error: unknown) {
-        throw new FileSystemError(`Configuration directory not found: ${configPath}`, error instanceof Error ? error : undefined);
+        throw new FileSystemError(
+          `Configuration directory not found: ${configPath}`,
+          error instanceof Error ? error : undefined
+        );
       }
 
       // Parse CLAUDE.md
       try {
         claudeMd = await fs.readFile(path.join(configPath, 'CLAUDE.md'), 'utf-8');
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code !== 'ENOENT'
+        ) {
           ErrorHandler.warn(
             new FileSystemError(`Could not read CLAUDE.md: ${error.message}`, error),
             'parse-claude-md'
@@ -174,7 +189,10 @@ export class ConfigParser {
 
       // Parse package.json for dependency information (optional)
       try {
-        const packageJsonContent = await fs.readFile(path.join(configPath, 'package.json'), 'utf-8');
+        const packageJsonContent = await fs.readFile(
+          path.join(configPath, 'package.json'),
+          'utf-8'
+        );
         const packageJson = JSON.parse(packageJsonContent);
         dependencies = {
           peerDependencies: packageJson.peerDependencies,
@@ -182,7 +200,7 @@ export class ConfigParser {
           devDependencies: packageJson.devDependencies,
           engines: packageJson.engines,
         };
-      } catch (error: unknown) {
+      } catch (_error: unknown) {
         // package.json is optional, ignore if not found
       }
 
@@ -191,11 +209,18 @@ export class ConfigParser {
       try {
         await fs.access(claudeDir);
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code === 'ENOENT'
+        ) {
           // No .claude directory is valid for some configurations
           return { agents, commands, hooks, settings, claudeMd, dependencies };
         }
-        throw new FileSystemError(`Cannot access .claude directory: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined);
+        throw new FileSystemError(
+          `Cannot access .claude directory: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
 
       // Parse settings.json
@@ -210,7 +235,12 @@ export class ConfigParser {
           );
         }
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'ENOENT' && !(error instanceof ConfigurationError)) {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code !== 'ENOENT' &&
+          !(error instanceof ConfigurationError)
+        ) {
           ErrorHandler.warn(
             new FileSystemError(`Could not read settings.json: ${error.message}`, error),
             'parse-settings'
@@ -231,13 +261,20 @@ export class ConfigParser {
             if (agent) agents.push(agent);
           } catch (error: unknown) {
             ErrorHandler.warn(
-              new FileSystemError(`Could not read agent file ${file}: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined),
+              new FileSystemError(
+                `Could not read agent file ${file}: ${error instanceof Error ? error.message : String(error)}`,
+                error instanceof Error ? error : undefined
+              ),
               'parse-agent'
             );
           }
         }
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code !== 'ENOENT'
+        ) {
           ErrorHandler.warn(
             new FileSystemError(`Could not read agents directory: ${error.message}`, error),
             'parse-agents'
@@ -258,13 +295,20 @@ export class ConfigParser {
             if (command) commands.push(command);
           } catch (error: unknown) {
             ErrorHandler.warn(
-              new FileSystemError(`Could not read command file ${file}: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined),
+              new FileSystemError(
+                `Could not read command file ${file}: ${error instanceof Error ? error.message : String(error)}`,
+                error instanceof Error ? error : undefined
+              ),
               'parse-command'
             );
           }
         }
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code !== 'ENOENT'
+        ) {
           ErrorHandler.warn(
             new FileSystemError(`Could not read commands directory: ${error.message}`, error),
             'parse-commands'
@@ -309,13 +353,20 @@ export class ConfigParser {
             }
           } catch (error: unknown) {
             ErrorHandler.warn(
-              new FileSystemError(`Could not read hook file ${file}: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined),
+              new FileSystemError(
+                `Could not read hook file ${file}: ${error instanceof Error ? error.message : String(error)}`,
+                error instanceof Error ? error : undefined
+              ),
               'parse-hook'
             );
           }
         }
       } catch (error: unknown) {
-        if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error as NodeJS.ErrnoException).code !== 'ENOENT'
+        ) {
           ErrorHandler.warn(
             new FileSystemError(`Could not read hooks directory: ${error.message}`, error),
             'parse-hooks'

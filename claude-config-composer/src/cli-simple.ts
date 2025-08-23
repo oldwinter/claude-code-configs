@@ -5,9 +5,9 @@
  * This file provides a minimal interface for CI testing
  */
 
+import chalk from 'chalk';
 import { program } from 'commander';
 import { ConfigRegistry } from './registry/config-registry';
-import chalk from 'chalk';
 
 const packageJson = require('../package.json');
 
@@ -33,21 +33,23 @@ program
     if (registry.getAll().length === 0) {
       await registry.initialize();
     }
-    
+
     console.log(chalk.cyan.bold('\n📚 Available Configurations\n'));
-    
+
     const categories = ['framework', 'ui', 'tooling', 'database', 'mcp-server'];
-    
+
     categories.forEach(category => {
       const configs = registry.getByCategory(category);
       if (configs.length > 0) {
         console.log(chalk.yellow(`\n${category.toUpperCase()}`));
         configs.forEach(config => {
-          console.log(`  • ${chalk.white(config.name)} ${chalk.gray(`v${config.version}`)} - ${chalk.dim(config.description)}`);
+          console.log(
+            `  • ${chalk.white(config.name)} ${chalk.gray(`v${config.version}`)} - ${chalk.dim(config.description)}`
+          );
         });
       }
     });
-    
+
     console.log();
   });
 

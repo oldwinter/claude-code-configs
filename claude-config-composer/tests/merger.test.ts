@@ -132,7 +132,8 @@ describe('ConfigMerger', () => {
       const merger = new ConfigMerger();
       const configs = [
         {
-          content: '# Title\n\n```javascript\nconst x = "hello";\n```\n\n## Special chars: ${}[]\n\nThis section has special characters like $, {}, and [] in the title.',
+          content:
+            '# Title\n\n```javascript\nconst x = "hello";\n```\n\n## Special chars: ${}[]\n\nThis section has special characters like $, {}, and [] in the title.',
           metadata: {
             id: 'special',
             name: 'Special',
@@ -163,12 +164,36 @@ describe('ComponentMerger', () => {
       const merger = new ComponentMerger();
       const agentGroups = [
         [
-          { name: 'agent1', description: 'Agent 1', tools: ['tool1'], content: 'Agent 1 content', source: 'config1' },
-          { name: 'agent2', description: 'Agent 2', tools: ['tool2'], content: 'Agent 2 content', source: 'config1' },
+          {
+            name: 'agent1',
+            description: 'Agent 1',
+            tools: ['tool1'],
+            content: 'Agent 1 content',
+            source: 'config1',
+          },
+          {
+            name: 'agent2',
+            description: 'Agent 2',
+            tools: ['tool2'],
+            content: 'Agent 2 content',
+            source: 'config1',
+          },
         ],
         [
-          { name: 'agent2', description: 'Agent 2 updated', tools: ['tool2', 'tool3'], content: 'Agent 2 updated content', source: 'config2' },
-          { name: 'agent3', description: 'Agent 3', tools: ['tool3'], content: 'Agent 3 content', source: 'config2' },
+          {
+            name: 'agent2',
+            description: 'Agent 2 updated',
+            tools: ['tool2', 'tool3'],
+            content: 'Agent 2 updated content',
+            source: 'config2',
+          },
+          {
+            name: 'agent3',
+            description: 'Agent 3',
+            tools: ['tool3'],
+            content: 'Agent 3 content',
+            source: 'config2',
+          },
         ],
       ];
 
@@ -191,12 +216,33 @@ describe('ComponentMerger', () => {
       const merger = new ComponentMerger();
       const commandGroups = [
         [
-          { name: 'cmd1', description: 'Command 1', content: 'Command 1 content', source: 'config1' },
-          { name: 'cmd2', description: 'Command 2', content: 'Command 2 content', source: 'config1' },
+          {
+            name: 'cmd1',
+            description: 'Command 1',
+            content: 'Command 1 content',
+            source: 'config1',
+          },
+          {
+            name: 'cmd2',
+            description: 'Command 2',
+            content: 'Command 2 content',
+            source: 'config1',
+          },
         ],
         [
-          { name: 'cmd2', description: 'Command 2 updated', content: 'Command 2 updated content', source: 'config2', argumentHint: 'arg1' },
-          { name: 'cmd3', description: 'Command 3', content: 'Command 3 content', source: 'config2' },
+          {
+            name: 'cmd2',
+            description: 'Command 2 updated',
+            content: 'Command 2 updated content',
+            source: 'config2',
+            argumentHint: 'arg1',
+          },
+          {
+            name: 'cmd3',
+            description: 'Command 3',
+            content: 'Command 3 content',
+            source: 'config2',
+          },
         ],
       ];
 
@@ -219,12 +265,32 @@ describe('ComponentMerger', () => {
       const merger = new ComponentMerger();
       const hookGroups = [
         [
-          { name: 'hook1.sh', content: '#!/bin/bash\necho "Hook 1"', type: 'script' as const, source: 'config1' },
-          { name: 'hook2.sh', content: '#!/bin/bash\necho "Hook 2"', type: 'script' as const, source: 'config1' },
+          {
+            name: 'hook1.sh',
+            content: '#!/bin/bash\necho "Hook 1"',
+            type: 'script' as const,
+            source: 'config1',
+          },
+          {
+            name: 'hook2.sh',
+            content: '#!/bin/bash\necho "Hook 2"',
+            type: 'script' as const,
+            source: 'config1',
+          },
         ],
         [
-          { name: 'hook2.sh', content: '#!/bin/bash\necho "Hook 2 updated"', type: 'script' as const, source: 'config2' },
-          { name: 'hook3.sh', content: '#!/bin/bash\necho "Hook 3"', type: 'script' as const, source: 'config2' },
+          {
+            name: 'hook2.sh',
+            content: '#!/bin/bash\necho "Hook 2 updated"',
+            type: 'script' as const,
+            source: 'config2',
+          },
+          {
+            name: 'hook3.sh',
+            content: '#!/bin/bash\necho "Hook 3"',
+            type: 'script' as const,
+            source: 'config2',
+          },
         ],
       ];
 

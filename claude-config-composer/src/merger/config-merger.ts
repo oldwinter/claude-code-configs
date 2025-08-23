@@ -109,7 +109,7 @@ export class ConfigMerger {
             this.sections.set(key, []);
           }
 
-          this.sections.get(key)!.push(section);
+          this.sections.get(key)?.push(section);
         } catch (error) {
           ErrorHandler.warn(
             new ConfigurationError(
@@ -136,7 +136,7 @@ export class ConfigMerger {
     if (title.toLowerCase().includes('development assistant')) {
       return 'development assistant';
     }
-    
+
     // Special normalization for similar section types
     const normalizations: Record<string, string> = {
       'breaking changes': 'breaking changes',
@@ -146,17 +146,17 @@ export class ConfigMerger {
       'available commands': 'available commands',
       'security best practices': 'security best practices',
       'performance optimization': 'performance optimization',
-      'testing': 'testing',
-      'deployment': 'deployment',
+      testing: 'testing',
+      deployment: 'deployment',
     };
-    
+
     const titleLower = title.toLowerCase();
     for (const [pattern, normalized] of Object.entries(normalizations)) {
       if (titleLower.includes(pattern)) {
         return normalized;
       }
     }
-    
+
     return title
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
@@ -170,7 +170,7 @@ export class ConfigMerger {
       if (!configs || !Array.isArray(configs)) {
         throw new ValidationError('Configurations must be provided as an array');
       }
-      
+
       // Handle empty configuration list with default output
       if (configs.length === 0) {
         return this.createEmptyConfiguration();
@@ -254,7 +254,7 @@ export class ConfigMerger {
             if (this.shouldMergeSections(sections)) {
               const merged = this.mergeSimilarSections(sections);
               // Only add if merged content is not empty
-              if (merged && merged.trim()) {
+              if (merged?.trim()) {
                 output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
                 output.push('');
                 output.push(merged);
@@ -262,7 +262,7 @@ export class ConfigMerger {
               }
             } else {
               // Only add if content is not empty
-              if (bestSection.content && bestSection.content.trim()) {
+              if (bestSection.content?.trim()) {
                 output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
                 output.push('');
                 output.push(bestSection.content);
@@ -337,7 +337,7 @@ export class ConfigMerger {
         resources: 30,
       };
 
-      for (const [pattern, order] of Object.entries(orderMap)) {
+      for (const [pattern, _order] of Object.entries(orderMap)) {
         const aMatches = keyA.includes(pattern);
         const bMatches = keyB.includes(pattern);
         if (aMatches && !bMatches) return -1;
@@ -400,8 +400,8 @@ export class ConfigMerger {
     }
 
     // Special handling for sections with numbered lists (like Security Best Practices)
-    const isNumberedListSection = sections.some(s => 
-      s.content.match(/^\d+\.\s+/m) || s.content.includes('1. ')
+    const isNumberedListSection = sections.some(
+      s => s.content.match(/^\d+\.\s+/m) || s.content.includes('1. ')
     );
 
     if (isNumberedListSection) {
@@ -419,7 +419,7 @@ export class ConfigMerger {
 
     for (const section of sections) {
       if (!section.content || section.content.trim() === '') continue;
-      
+
       const lines = section.content.split('\n');
       let currentSubsection = 'main';
 
@@ -435,12 +435,14 @@ export class ConfigMerger {
 
         const normalizedLine = line.trim();
         const contentKey = normalizedLine.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
+
         // Skip empty lines and duplicates
-        if (normalizedLine && 
-            !normalizedLine.startsWith('*Combined from:') &&
-            !processedContent.has(contentKey)) {
-          contentMap.get(currentSubsection)!.push(line);
+        if (
+          normalizedLine &&
+          !normalizedLine.startsWith('*Combined from:') &&
+          !processedContent.has(contentKey)
+        ) {
+          contentMap.get(currentSubsection)?.push(line);
           if (contentKey) processedContent.add(contentKey);
         }
       }
@@ -449,7 +451,7 @@ export class ConfigMerger {
     // Rebuild content with proper structure
     for (const [subsection, lines] of contentMap) {
       if (lines.length === 0) continue; // Skip empty subsections
-      
+
       if (subsection !== 'main') {
         mergedContent.push(subsection);
       }
@@ -461,7 +463,7 @@ export class ConfigMerger {
 
   private mergeNumberedLists(sections: Section[], sources: string[]): string {
     const mergedContent: string[] = [];
-    
+
     if (sources.length > 1) {
       mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
       mergedContent.push('');
@@ -472,7 +474,7 @@ export class ConfigMerger {
 
     for (const section of sections) {
       if (!section.content || section.content.trim() === '') continue;
-      
+
       const lines = section.content.split('\n');
       let currentItem: string[] = [];
       let isInItem = false;
@@ -483,13 +485,16 @@ export class ConfigMerger {
           // Save previous item if exists
           if (currentItem.length > 0) {
             const itemText = currentItem.join('\n');
-            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
-            
+            const itemKey = itemText
+              .toLowerCase()
+              .replace(/^\d+\.\s+/, '')
+              .trim();
+
             if (!allItems.has(itemKey)) {
               allItems.set(itemKey, { content: itemText, source: section.source });
             }
           }
-          
+
           currentItem = [line];
           isInItem = true;
         } else if (isInItem && line.match(/^\s+/)) {
@@ -499,8 +504,11 @@ export class ConfigMerger {
           // Empty line might end an item
           if (currentItem.length > 0) {
             const itemText = currentItem.join('\n');
-            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
-            
+            const itemKey = itemText
+              .toLowerCase()
+              .replace(/^\d+\.\s+/, '')
+              .trim();
+
             if (!allItems.has(itemKey)) {
               allItems.set(itemKey, { content: itemText, source: section.source });
             }
@@ -511,8 +519,11 @@ export class ConfigMerger {
           // Other content
           if (currentItem.length > 0) {
             const itemText = currentItem.join('\n');
-            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
-            
+            const itemKey = itemText
+              .toLowerCase()
+              .replace(/^\d+\.\s+/, '')
+              .trim();
+
             if (!allItems.has(itemKey)) {
               allItems.set(itemKey, { content: itemText, source: section.source });
             }
@@ -526,8 +537,11 @@ export class ConfigMerger {
       // Don't forget the last item
       if (currentItem.length > 0) {
         const itemText = currentItem.join('\n');
-        const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
-        
+        const itemKey = itemText
+          .toLowerCase()
+          .replace(/^\d+\.\s+/, '')
+          .trim();
+
         if (!allItems.has(itemKey)) {
           allItems.set(itemKey, { content: itemText, source: section.source });
         }
@@ -546,7 +560,7 @@ export class ConfigMerger {
 
   private mergeProjectContexts(sections: Section[], sources: string[]): string {
     const mergedContent: string[] = [];
-    
+
     if (sources.length > 1) {
       mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
       mergedContent.push('');
@@ -554,20 +568,20 @@ export class ConfigMerger {
 
     // Collect unique project descriptions
     const projectDescriptions = new Map<string, string>();
-    
+
     for (const section of sections) {
       if (!section.content || section.content.trim() === '') continue;
-      
+
       // Extract project description paragraphs
       const lines = section.content.split('\n');
       const descriptionLines: string[] = [];
-      
+
       for (const line of lines) {
         if (!line.startsWith('*Combined from:')) {
           descriptionLines.push(line);
         }
       }
-      
+
       if (descriptionLines.length > 0) {
         const description = descriptionLines.join('\n').trim();
         if (description && !projectDescriptions.has(section.source)) {
@@ -584,7 +598,7 @@ export class ConfigMerger {
       // For multiple descriptions, present them as a unified context
       mergedContent.push('This is a comprehensive project that combines multiple technologies:');
       mergedContent.push('');
-      
+
       for (const desc of descriptions) {
         // Add each description as a paragraph
         mergedContent.push(desc);
@@ -605,7 +619,9 @@ export class ConfigMerger {
     output.push('');
     output.push('## No Configurations Available');
     output.push('');
-    output.push('No configurations were provided for merging. Please specify at least one configuration.');
+    output.push(
+      'No configurations were provided for merging. Please specify at least one configuration.'
+    );
     output.push('');
     output.push('---');
     output.push('');
@@ -619,7 +635,10 @@ export class ConfigMerger {
     return output.join('\n');
   }
 
-  private addMetadata(output: string[], configs: Array<{ metadata: ConfigMetadata; dependencies?: any }>) {
+  private addMetadata(
+    output: string[],
+    configs: Array<{ metadata: ConfigMetadata; dependencies?: any }>
+  ) {
     output.push('');
     output.push('---');
     output.push('');
@@ -638,26 +657,26 @@ export class ConfigMerger {
       output.push('');
       output.push('### Dependencies');
       output.push('');
-      
+
       // Collect all unique dependencies
       const allPeerDeps = new Map<string, Set<string>>();
       const allEngines = new Map<string, Set<string>>();
-      
+
       for (const { metadata, dependencies } of configsWithDeps) {
         if (dependencies?.peerDependencies) {
           for (const [pkg, version] of Object.entries(dependencies.peerDependencies)) {
             if (!allPeerDeps.has(pkg)) allPeerDeps.set(pkg, new Set());
-            allPeerDeps.get(pkg)!.add(version as string);
+            allPeerDeps.get(pkg)?.add(version as string);
           }
         }
         if (dependencies?.engines) {
           for (const [engine, version] of Object.entries(dependencies.engines)) {
             if (!allEngines.has(engine)) allEngines.set(engine, new Set());
-            allEngines.get(engine)!.add(version as string);
+            allEngines.get(engine)?.add(version as string);
           }
         }
       }
-      
+
       if (allEngines.size > 0) {
         output.push('#### Required Engines');
         output.push('');
@@ -667,7 +686,7 @@ export class ConfigMerger {
         }
         output.push('');
       }
-      
+
       if (allPeerDeps.size > 0) {
         output.push('#### Peer Dependencies');
         output.push('');

@@ -57,9 +57,15 @@ describe('ConfigRegistry Unit Tests', () => {
         expect(config.path).toBeDefined();
 
         // Validate category is one of allowed values
-        expect(['framework', 'ui', 'tooling', 'testing', 'database', 'api', 'mcp-server']).toContain(
-          config.category
-        );
+        expect([
+          'framework',
+          'ui',
+          'tooling',
+          'testing',
+          'database',
+          'api',
+          'mcp-server',
+        ]).toContain(config.category);
       }
     });
 
@@ -160,7 +166,7 @@ describe('ConfigRegistry Unit Tests', () => {
 
       // No category should dominate too much
       const totalConfigs = configs.length;
-      for (const [category, count] of categoryCounts) {
+      for (const [_category, count] of categoryCounts) {
         expect(count / totalConfigs).toBeLessThan(0.8); // No category > 80%
       }
     });

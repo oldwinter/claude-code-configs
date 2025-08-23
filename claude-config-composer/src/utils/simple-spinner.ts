@@ -19,10 +19,10 @@ export class SimpleSpinner {
       this.message = newMessage;
     }
     if (this.isSpinning) return this;
-    
+
     this.isSpinning = true;
     this.stream.write(`- ${this.message}`);
-    
+
     // Only animate if we have a TTY (not in CI)
     if (this.stream.isTTY) {
       this.timer = setInterval(() => {
@@ -30,7 +30,7 @@ export class SimpleSpinner {
         this.stream.write(`\r${this.frames[this.currentFrame]} ${this.message}`);
       }, 80);
     }
-    
+
     return this;
   }
 

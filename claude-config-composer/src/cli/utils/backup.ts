@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import fs from 'fs/promises';
 import path from 'path';
+import { getErrorMessage, isFileNotFoundError } from '../../types/errors.js';
 import { ErrorHandler, FileSystemError } from '../../utils/error-handler';
-import { isFileNotFoundError, getErrorMessage } from '../../types/errors.js';
 
 /**
  * Backup utilities for existing configurations
@@ -133,7 +133,10 @@ export class BackupUtils {
             .sort()
             .reverse(); // Most recent first
         } catch (error: unknown) {
-          throw new FileSystemError(`Failed to list backups: ${getErrorMessage(error)}`, error instanceof Error ? error : undefined);
+          throw new FileSystemError(
+            `Failed to list backups: ${getErrorMessage(error)}`,
+            error instanceof Error ? error : undefined
+          );
         }
       },
       'backup-list',
@@ -162,7 +165,9 @@ export class BackupUtils {
             await fs.rm(backupPath, { recursive: true, force: true });
             console.log(chalk.gray(`🗑️  Cleaned up old backup: ${backup}`));
           } catch (error: unknown) {
-            console.warn(chalk.yellow(`⚠️  Could not remove backup ${backup}: ${getErrorMessage(error)}`));
+            console.warn(
+              chalk.yellow(`⚠️  Could not remove backup ${backup}: ${getErrorMessage(error)}`)
+            );
           }
         }
       },

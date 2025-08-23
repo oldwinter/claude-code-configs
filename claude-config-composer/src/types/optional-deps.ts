@@ -6,7 +6,14 @@
 export interface BoxenOptions {
   padding?: number | { top?: number; right?: number; bottom?: number; left?: number };
   margin?: number | { top?: number; right?: number; bottom?: number; left?: number };
-  borderStyle?: 'single' | 'double' | 'round' | 'bold' | 'singleDouble' | 'doubleSingle' | 'classic';
+  borderStyle?:
+    | 'single'
+    | 'double'
+    | 'round'
+    | 'bold'
+    | 'singleDouble'
+    | 'doubleSingle'
+    | 'classic';
   borderColor?: string;
   backgroundColor?: string;
   align?: 'left' | 'center' | 'right';
@@ -16,7 +23,7 @@ export interface BoxenOptions {
   fullscreen?: boolean;
 }
 
-export type BoxenFunction = (text: string, options?: BoxenOptions) => string
+export type BoxenFunction = (text: string, options?: BoxenOptions) => string;
 
 export interface CFontsOptions {
   font?: string;
@@ -70,7 +77,7 @@ export interface FigletOptions {
   whitespaceBreak?: boolean;
 }
 
-export type FigletCallback = (err: Error | null, data?: string) => void
+export type FigletCallback = (err: Error | null, data?: string) => void;
 
 export interface Figlet {
   text(input: string, options: FigletOptions, callback: FigletCallback): void;
@@ -110,7 +117,7 @@ export interface Spinner {
   clear(): void;
 }
 
-export type CreateSpinnerFunction = (options?: SpinnerOptions) => Spinner
+export type CreateSpinnerFunction = (options?: SpinnerOptions) => Spinner;
 
 export interface ProgressBarOptions {
   format?: string;

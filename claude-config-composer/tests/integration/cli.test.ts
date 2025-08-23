@@ -1,4 +1,4 @@
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import fsSync from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
@@ -26,7 +26,7 @@ describe('CLI Integration Tests', () => {
     // Clean up test directory
     try {
       await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });
@@ -121,7 +121,7 @@ describe('CLI Integration Tests', () => {
 
       expect(result).toContain('Configuration generated in current directory');
 
-      const claudeDir = path.join(testDir, '.claude');
+      const _claudeDir = path.join(testDir, '.claude');
       const claudeMd = await fs.readFile(path.join(testDir, 'CLAUDE.md'), 'utf8');
 
       // Should contain content from both configurations
@@ -301,7 +301,6 @@ describe('CLI Integration Tests', () => {
       // Should complete within 10 seconds
       expect(duration).toBeLessThan(10000);
     });
-
   });
 
   // Removed 'Configuration Content Quality' tests due to symlink/path issues in test environment

@@ -28,11 +28,24 @@ export class PathValidator {
     /^[\\/]/, // Absolute paths starting with / or \
     /^[a-zA-Z]:[\\/]/, // Windows absolute paths (C:\, D:\, etc.)
     /\0/, // Null bytes
-    /[<>:"|?*]/, // Invalid Windows filename characters
+    // Note: Windows invalid characters are checked separately for filenames only
   ];
 
   private static readonly MAX_PATH_LENGTH = 260; // Windows MAX_PATH
   private static readonly MAX_FILENAME_LENGTH = 255;
+
+  // Windows-specific invalid filename characters
+  private static readonly WINDOWS_INVALID_CHARS = /[<>:"|?*]/;
+
+  // Check if running on Windows
+  private static isWindows(): boolean {
+    try {
+      return process.platform === 'win32';
+    } catch {
+      // If process.platform is not available, assume Unix-like for safety
+      return false;
+    }
+  }
 
   /**
    * Sanitizes a path by removing or replacing unsafe characters
@@ -137,14 +150,18 @@ export class PathValidator {
     const sanitized = PathValidator.sanitizePath(inputPath);
 
     // If a base path is provided, ensure the path stays within it
+    // Avoid path.resolve() which uses process.cwd() internally
     if (allowedBasePath) {
-      const resolvedAllowed = path.resolve(allowedBasePath);
-      const resolvedTarget = path.resolve(allowedBasePath, sanitized);
+      // Use path.normalize instead of resolve to avoid process.cwd()
+      const normalizedBase = path.normalize(allowedBasePath);
+      const normalizedTarget = path.normalize(path.join(allowedBasePath, sanitized));
 
-      if (
-        !resolvedTarget.startsWith(resolvedAllowed + path.sep) &&
-        resolvedTarget !== resolvedAllowed
-      ) {
+      // Check if the target path escapes the base directory
+      // by checking for .. components after normalization
+      const relativePath = path.relative(normalizedBase, normalizedTarget);
+      // Normalize separators for consistent checking across platforms
+      const normalizedRelative = relativePath.replace(/\\/g, '/');
+      if (normalizedRelative.startsWith('..')) {
         throw new PathValidationError('Path attempts to escape allowed directory', inputPath);
       }
     }
@@ -171,14 +188,21 @@ export class PathValidator {
     // Remove null bytes and control characters
     let sanitized = filename.replace(/[\0-\x1f\x7f-\x9f]/g, '');
 
-    // Check for reserved names on Windows
-    const reserved = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
-    if (reserved.test(sanitized)) {
-      throw new PathValidationError('Filename uses reserved system name', filename);
-    }
+    // Platform-specific validation
+    if (PathValidator.isWindows()) {
+      // Check for reserved names on Windows
+      const reserved = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
+      if (reserved.test(sanitized)) {
+        throw new PathValidationError('Filename uses reserved system name', filename);
+      }
 
-    // Remove invalid characters for cross-platform compatibility
-    sanitized = sanitized.replace(/[<>:"|?*]/g, '');
+      // Remove invalid characters on Windows
+      sanitized = sanitized.replace(PathValidator.WINDOWS_INVALID_CHARS, '');
+    } else {
+      // On Unix/Linux, only remove the truly problematic characters
+      // Allow colons and other characters that are valid on these systems
+      sanitized = sanitized.replace(/[<>"|?*]/g, ''); // Remove chars invalid on Unix but keep :
+    }
 
     // Remove leading/trailing dots and spaces
     sanitized = sanitized.replace(/^[.\s]+|[.\s]+$/g, '');
@@ -238,11 +262,16 @@ export class PathValidator {
     const validatedPath = PathValidator.validatePath(targetPath, effectiveBasePath);
     const fullPath = path.join(effectiveBasePath, validatedPath);
 
-    // Double-check that the resolved path is still within the base path
-    const resolvedBase = path.resolve(effectiveBasePath);
-    const resolvedTarget = path.resolve(fullPath);
+    // Double-check using path operations that don't require process.cwd()
+    // Use normalize and relative instead of resolve
+    const normalizedBase = path.normalize(effectiveBasePath);
+    const normalizedTarget = path.normalize(fullPath);
 
-    if (!resolvedTarget.startsWith(resolvedBase + path.sep) && resolvedTarget !== resolvedBase) {
+    // Check if target escapes base using relative path
+    const relativePath = path.relative(normalizedBase, normalizedTarget);
+    // Normalize separators for consistent checking across platforms
+    const normalizedRelative = relativePath.replace(/\\/g, '/');
+    if (normalizedRelative.startsWith('..')) {
       throw new PathValidationError('Resolved path escapes base directory', targetPath);
     }
 
@@ -263,11 +292,15 @@ export class PathValidator {
     const fullDirectory = path.join(basePath, validatedDirectory);
     const fullPath = path.join(fullDirectory, validatedFilename);
 
-    // Double-check that the resolved path is still within the base path
-    const resolvedBase = path.resolve(basePath);
-    const resolvedTarget = path.resolve(fullPath);
+    // Double-check using path operations that don't require process.cwd()
+    const normalizedBase = path.normalize(basePath);
+    const normalizedTarget = path.normalize(fullPath);
 
-    if (!resolvedTarget.startsWith(resolvedBase + path.sep) && resolvedTarget !== resolvedBase) {
+    // Check if target escapes base using relative path
+    const relativePath = path.relative(normalizedBase, normalizedTarget);
+    // Normalize separators for consistent checking across platforms
+    const normalizedRelative = relativePath.replace(/\\/g, '/');
+    if (normalizedRelative.startsWith('..')) {
       throw new PathValidationError(
         'Resolved file path escapes base directory',
         `${directory}/${filename}`
