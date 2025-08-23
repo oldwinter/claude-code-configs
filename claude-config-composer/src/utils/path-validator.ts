@@ -231,8 +231,9 @@ export class PathValidator {
    * Safely creates a directory path, ensuring it's within the allowed base path
    */
   static async createSafeDirectory(targetPath: string, basePath: string): Promise<string> {
-    // Handle current directory case
-    const effectiveBasePath = basePath === '.' ? process.cwd() : basePath;
+    // Handle current directory case - just use the provided basePath
+    // Avoid process.cwd() which can fail in CI when directory is deleted
+    const effectiveBasePath = basePath || '.';
 
     const validatedPath = PathValidator.validatePath(targetPath, effectiveBasePath);
     const fullPath = path.join(effectiveBasePath, validatedPath);

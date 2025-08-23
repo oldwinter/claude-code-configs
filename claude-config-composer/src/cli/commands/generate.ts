@@ -196,7 +196,8 @@ export class GenerateCommand {
    */
   private static async isClaudeConfigRepo(): Promise<boolean> {
     try {
-      const packageJson = await fs.readFile(path.join(process.cwd(), 'package.json'), 'utf-8');
+      // Use relative path to avoid process.cwd() issues in CI
+      const packageJson = await fs.readFile('package.json', 'utf-8');
       const pkg = JSON.parse(packageJson);
       return pkg.name === 'claude-config-composer';
     } catch {

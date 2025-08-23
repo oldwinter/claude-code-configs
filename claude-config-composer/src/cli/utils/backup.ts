@@ -45,7 +45,8 @@ export class BackupUtils {
     return ErrorHandler.wrapAsync(
       async () => {
         try {
-          const gitignorePath = path.join(process.cwd(), '.gitignore');
+          // Use relative path to avoid process.cwd() issues in CI
+          const gitignorePath = '.gitignore';
           let gitignoreContent = '';
 
           try {

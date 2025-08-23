@@ -32,16 +32,15 @@ export class ConfigGenerator {
     showProgress: boolean = true
   ): Promise<void> {
     // Handle output directory path
-    // For absolute paths (like temp directories in tests), use directly
-    // For relative paths, just resolve them
-    if (path.isAbsolute(outputDir)) {
-      // For absolute paths (e.g., temp directories in CI), use as-is
-      outputDir = path.normalize(outputDir);
-    } else {
-      // For relative paths, resolve from current directory
-      // Don't use sanitizePath here as it rejects valid paths
-      outputDir = path.resolve(process.cwd(), outputDir || '.');
+    // Always normalize the path, whether absolute or relative
+    // This avoids the need for process.cwd() which can fail in CI
+    if (!outputDir) {
+      outputDir = '.';
     }
+    
+    // Normalize the path - this works for both absolute and relative paths
+    // and doesn't require process.cwd()
+    outputDir = path.normalize(outputDir);
 
     // Validate input configurations
     try {
