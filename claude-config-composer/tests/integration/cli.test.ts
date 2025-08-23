@@ -73,10 +73,14 @@ describe('CLI Integration Tests', () => {
       expect(result).toContain('Configuration generated in');
 
       // Add delay for CI file system sync
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Check that .claude directory was created
       const claudeDir = path.join(testDir, '.claude');
+      if (!fsSync.existsSync(claudeDir)) {
+        console.error('Expected .claude directory not found at:', claudeDir);
+        console.error('Files in testDir:', await fs.readdir(testDir).catch(() => []));
+      }
       expect(fsSync.existsSync(claudeDir)).toBe(true);
 
       // Check essential files
@@ -119,6 +123,9 @@ describe('CLI Integration Tests', () => {
       });
 
       expect(result).toContain('Configuration generated in');
+
+      // Add delay for CI file system sync
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const claudeMd = await fs.readFile(path.join(testDir, 'CLAUDE.md'), 'utf8');
 
