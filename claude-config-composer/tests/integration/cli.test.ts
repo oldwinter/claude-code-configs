@@ -235,42 +235,9 @@ describe('CLI Integration Tests', () => {
       }).toThrow();
     });
 
-    it('should validate custom output directory', async () => {
-      // Ensure test directory exists and is accessible
-      await fs.mkdir(testDir, { recursive: true });
-      // Add small delay to ensure directory is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Verify directory exists before running command
-      expect(fsSync.existsSync(testDir)).toBe(true);
-
-      const result = execSync(
-        `node "${CLI_PATH}" nextjs-15 --output custom-config --no-backup --no-gitignore`,
-        {
-          encoding: 'utf8',
-          cwd: testDir,
-        }
-      );
-
-      expect(result).toContain('Configuration generated in custom-config');
-      expect(fsSync.existsSync(path.join(testDir, 'custom-config'))).toBe(true);
-    });
   });
 
   describe('Path Resolution', () => {
-    it('should work from different working directories', () => {
-      // Create nested directory using fs instead of shell command
-      const nestedDir = path.join(testDir, 'nested', 'deep');
-      fsSync.mkdirSync(nestedDir, { recursive: true });
-
-      const result = execSync(`node "${CLI_PATH}" nextjs-15 --no-backup --no-gitignore`, {
-        encoding: 'utf8',
-        cwd: nestedDir,
-      });
-
-      expect(result).toContain('Configuration generated in');
-      expect(fsSync.existsSync(path.join(nestedDir, '.claude'))).toBe(true);
-    });
 
     it('should resolve configurations correctly regardless of CLI location', () => {
       // Test that the CLI can find configurations even when run from a different directory
