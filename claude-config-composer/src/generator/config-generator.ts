@@ -205,12 +205,8 @@ export class ConfigGenerator {
         console.log('Validated settings:', JSON.stringify(validatedSettings, null, 2));
       }
 
-      const settingsPath = await PathValidator.createSafeFilePath(
-        'settings.json',
-        '.claude',
-        resolvedOutputDir
-      );
-
+      // Write settings.json directly to the already-created .claude directory
+      const settingsPath = path.join(claudeDir, 'settings.json');
       await fs.writeFile(settingsPath, JSON.stringify(validatedSettings, null, 2));
       if (spinner) spinner.succeed(steps[currentStep]);
 
