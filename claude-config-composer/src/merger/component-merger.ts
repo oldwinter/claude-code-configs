@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import type { Agent, Command, Hook, Settings } from '../parser/config-parser';
-import type { HooksConfig, StatusLine } from '../types/config.js';
+import type { HooksConfig, StatusLine, HookEntry, HookCommand } from '../types/config.js';
 
 /**
  * Handles the intelligent merging of configuration components from multiple sources
@@ -232,32 +232,73 @@ export class ComponentMerger {
   private mergeHooksConfig(hooks1: HooksConfig, hooks2: HooksConfig): HooksConfig {
     const merged: HooksConfig = {};
 
-    // Handle both camelCase and PascalCase hook types
-    const hookTypes = ['PreToolUse', 'PostToolUse', 'Stop', 'preToolUse', 'postToolUse', 'stop'];
+    // All hook types that might appear in configurations
+    const hookTypes = [
+      'PreToolUse', 'PostToolUse', 'Stop', 'UserPromptSubmit', 
+      'Notification', 'SubagentStop', 'SessionEnd', 'SessionStart', 'PreCompact'
+    ];
     
     for (const type of hookTypes) {
-      if (hooks1[type] || hooks2[type]) {
-        const items1 = Array.isArray(hooks1[type])
-          ? hooks1[type]
-          : hooks1[type]
-            ? [hooks1[type]]
-            : [];
-        const items2 = Array.isArray(hooks2[type])
-          ? hooks2[type]
-          : hooks2[type]
-            ? [hooks2[type]]
-            : [];
-
-        const combined = [...items1, ...items2];
-        if (combined.length === 1) {
-          merged[type] = combined[0];
-        } else if (combined.length > 1) {
-          merged[type] = combined;
+      const entries1 = hooks1[type] || [];
+      const entries2 = hooks2[type] || [];
+      
+      if (entries1.length > 0 || entries2.length > 0) {
+        const mergedEntries: HookEntry[] = [];
+        
+        // Process entries from hooks1
+        for (const entry of entries1) {
+          if (this.isValidHookEntry(entry)) {
+            mergedEntries.push(this.normalizeHookEntry(entry));
+          }
+        }
+        
+        // Process entries from hooks2
+        for (const entry of entries2) {
+          if (this.isValidHookEntry(entry)) {
+            mergedEntries.push(this.normalizeHookEntry(entry));
+          }
+        }
+        
+        if (mergedEntries.length > 0) {
+          merged[type] = mergedEntries;
         }
       }
     }
 
     return merged;
+  }
+  
+  private isValidHookEntry(entry: any): boolean {
+    return entry && typeof entry === 'object' && 'hooks' in entry && Array.isArray(entry.hooks);
+  }
+  
+  private normalizeHookEntry(entry: any): HookEntry {
+    const normalized: HookEntry = {
+      hooks: []
+    };
+    
+    // Only include matcher if it exists and is not empty
+    if (entry.matcher && entry.matcher !== '') {
+      normalized.matcher = entry.matcher;
+    }
+    
+    // Process hooks array
+    if (Array.isArray(entry.hooks)) {
+      for (const hook of entry.hooks) {
+        if (hook && typeof hook === 'object' && 'command' in hook) {
+          const hookCommand: HookCommand = {
+            type: hook.type || 'command',
+            command: hook.command
+          };
+          if (hook.timeout) {
+            hookCommand.timeout = hook.timeout;
+          }
+          normalized.hooks.push(hookCommand);
+        }
+      }
+    }
+    
+    return normalized;
   }
 
   private mergeStatusLine(status1: StatusLine | undefined, status2: StatusLine | undefined): StatusLine | undefined {

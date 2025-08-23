@@ -132,6 +132,31 @@ export class ConfigMerger {
   }
 
   private normalizeTitle(title: string): string {
+    // Special normalization for "Development Assistant" titles to group them together
+    if (title.toLowerCase().includes('development assistant')) {
+      return 'development assistant';
+    }
+    
+    // Special normalization for similar section types
+    const normalizations: Record<string, string> = {
+      'breaking changes': 'breaking changes',
+      'file conventions': 'file conventions',
+      'project structure': 'project structure',
+      'common commands': 'common commands',
+      'available commands': 'available commands',
+      'security best practices': 'security best practices',
+      'performance optimization': 'performance optimization',
+      'testing': 'testing',
+      'deployment': 'deployment',
+    };
+    
+    const titleLower = title.toLowerCase();
+    for (const [pattern, normalized] of Object.entries(normalizations)) {
+      if (titleLower.includes(pattern)) {
+        return normalized;
+      }
+    }
+    
     return title
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
@@ -219,17 +244,30 @@ export class ConfigMerger {
           try {
             const bestSection = this.selectBestSection(sections);
 
+            // Skip sections with no content
+            const hasContent = sections.some(s => s.content && s.content.trim() !== '');
+            if (!hasContent) {
+              processedSections.add(key);
+              continue;
+            }
+
             if (this.shouldMergeSections(sections)) {
               const merged = this.mergeSimilarSections(sections);
-              output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
-              output.push('');
-              output.push(merged);
-              output.push('');
+              // Only add if merged content is not empty
+              if (merged && merged.trim()) {
+                output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
+                output.push('');
+                output.push(merged);
+                output.push('');
+              }
             } else {
-              output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
-              output.push('');
-              output.push(bestSection.content);
-              output.push('');
+              // Only add if content is not empty
+              if (bestSection.content && bestSection.content.trim()) {
+                output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
+                output.push('');
+                output.push(bestSection.content);
+                output.push('');
+              }
             }
 
             processedSections.add(key);
@@ -355,39 +393,206 @@ export class ConfigMerger {
     const mergedContent: string[] = [];
     const sources = [...new Set(sections.map(s => s.source))];
 
-    mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
-    mergedContent.push('');
+    // Only add "Combined from" if there are multiple unique sources
+    if (sources.length > 1) {
+      mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
+      mergedContent.push('');
+    }
 
-    const contentMap = new Map<string, Set<string>>();
+    // Special handling for sections with numbered lists (like Security Best Practices)
+    const isNumberedListSection = sections.some(s => 
+      s.content.match(/^\d+\.\s+/m) || s.content.includes('1. ')
+    );
+
+    if (isNumberedListSection) {
+      return this.mergeNumberedLists(sections, sources);
+    }
+
+    // Special handling for project context sections
+    if (sections[0].title.toLowerCase().includes('project context')) {
+      return this.mergeProjectContexts(sections, sources);
+    }
+
+    // For other sections, use improved content merging
+    const contentMap = new Map<string, string[]>();
+    const processedContent = new Set<string>();
 
     for (const section of sections) {
+      if (!section.content || section.content.trim() === '') continue;
+      
       const lines = section.content.split('\n');
       let currentSubsection = 'main';
 
       for (const line of lines) {
-        if (line.startsWith('###')) {
+        // Track subsections
+        if (line.match(/^#{3,}\s+/)) {
           currentSubsection = line;
         }
 
         if (!contentMap.has(currentSubsection)) {
-          contentMap.set(currentSubsection, new Set());
+          contentMap.set(currentSubsection, []);
         }
 
         const normalizedLine = line.trim();
-        if (normalizedLine && !normalizedLine.startsWith('*Combined from:')) {
-          contentMap.get(currentSubsection)!.add(line);
+        const contentKey = normalizedLine.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Skip empty lines and duplicates
+        if (normalizedLine && 
+            !normalizedLine.startsWith('*Combined from:') &&
+            !processedContent.has(contentKey)) {
+          contentMap.get(currentSubsection)!.push(line);
+          if (contentKey) processedContent.add(contentKey);
         }
       }
     }
 
+    // Rebuild content with proper structure
     for (const [subsection, lines] of contentMap) {
+      if (lines.length === 0) continue; // Skip empty subsections
+      
       if (subsection !== 'main') {
         mergedContent.push(subsection);
       }
-      mergedContent.push(...Array.from(lines));
+      mergedContent.push(...lines);
     }
 
-    return mergedContent.join('\n');
+    return mergedContent.join('\n').trim();
+  }
+
+  private mergeNumberedLists(sections: Section[], sources: string[]): string {
+    const mergedContent: string[] = [];
+    
+    if (sources.length > 1) {
+      mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
+      mergedContent.push('');
+    }
+
+    const allItems = new Map<string, { content: string; source: string }>();
+    let itemNumber = 1;
+
+    for (const section of sections) {
+      if (!section.content || section.content.trim() === '') continue;
+      
+      const lines = section.content.split('\n');
+      let currentItem: string[] = [];
+      let isInItem = false;
+
+      for (const line of lines) {
+        // Check if this is a numbered item (at any level)
+        if (line.match(/^\d+\.\s+/)) {
+          // Save previous item if exists
+          if (currentItem.length > 0) {
+            const itemText = currentItem.join('\n');
+            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
+            
+            if (!allItems.has(itemKey)) {
+              allItems.set(itemKey, { content: itemText, source: section.source });
+            }
+          }
+          
+          currentItem = [line];
+          isInItem = true;
+        } else if (isInItem && line.match(/^\s+/)) {
+          // Continuation of current item (indented)
+          currentItem.push(line);
+        } else if (line.trim() === '') {
+          // Empty line might end an item
+          if (currentItem.length > 0) {
+            const itemText = currentItem.join('\n');
+            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
+            
+            if (!allItems.has(itemKey)) {
+              allItems.set(itemKey, { content: itemText, source: section.source });
+            }
+            currentItem = [];
+            isInItem = false;
+          }
+        } else if (!line.startsWith('*Combined from:')) {
+          // Other content
+          if (currentItem.length > 0) {
+            const itemText = currentItem.join('\n');
+            const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
+            
+            if (!allItems.has(itemKey)) {
+              allItems.set(itemKey, { content: itemText, source: section.source });
+            }
+            currentItem = [];
+            isInItem = false;
+          }
+          mergedContent.push(line);
+        }
+      }
+
+      // Don't forget the last item
+      if (currentItem.length > 0) {
+        const itemText = currentItem.join('\n');
+        const itemKey = itemText.toLowerCase().replace(/^\d+\.\s+/, '').trim();
+        
+        if (!allItems.has(itemKey)) {
+          allItems.set(itemKey, { content: itemText, source: section.source });
+        }
+      }
+    }
+
+    // Renumber and add all unique items
+    for (const { content } of allItems.values()) {
+      const renumbered = content.replace(/^\d+\.\s+/, `${itemNumber}. `);
+      mergedContent.push(renumbered);
+      itemNumber++;
+    }
+
+    return mergedContent.join('\n').trim();
+  }
+
+  private mergeProjectContexts(sections: Section[], sources: string[]): string {
+    const mergedContent: string[] = [];
+    
+    if (sources.length > 1) {
+      mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
+      mergedContent.push('');
+    }
+
+    // Collect unique project descriptions
+    const projectDescriptions = new Map<string, string>();
+    
+    for (const section of sections) {
+      if (!section.content || section.content.trim() === '') continue;
+      
+      // Extract project description paragraphs
+      const lines = section.content.split('\n');
+      const descriptionLines: string[] = [];
+      
+      for (const line of lines) {
+        if (!line.startsWith('*Combined from:')) {
+          descriptionLines.push(line);
+        }
+      }
+      
+      if (descriptionLines.length > 0) {
+        const description = descriptionLines.join('\n').trim();
+        if (description && !projectDescriptions.has(section.source)) {
+          projectDescriptions.set(section.source, description);
+        }
+      }
+    }
+
+    // Combine project descriptions intelligently
+    const descriptions = Array.from(projectDescriptions.values());
+    if (descriptions.length === 1) {
+      mergedContent.push(descriptions[0]);
+    } else {
+      // For multiple descriptions, present them as a unified context
+      mergedContent.push('This is a comprehensive project that combines multiple technologies:');
+      mergedContent.push('');
+      
+      for (const desc of descriptions) {
+        // Add each description as a paragraph
+        mergedContent.push(desc);
+        mergedContent.push('');
+      }
+    }
+
+    return mergedContent.join('\n').trim();
   }
 
   private createEmptyConfiguration(): string {
