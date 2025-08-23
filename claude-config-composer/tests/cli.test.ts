@@ -268,7 +268,11 @@ describe('CLI Core Commands', () => {
         expect(error).toBeDefined();
       } finally {
         // Restore permissions for cleanup
-        await fs.chmod(readOnlyDir, 0o755);
+        try {
+          await fs.chmod(readOnlyDir, 0o755);
+        } catch {
+          // Directory might not exist, that's ok
+        }
       }
     });
   });

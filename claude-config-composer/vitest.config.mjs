@@ -1,5 +1,8 @@
 import path from 'path';
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
@@ -16,7 +19,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['tests/**', 'dist/**', 'scripts/**', '**/*.d.ts', 'vitest.config.ts'],
+      exclude: ['tests/**', 'dist/**', 'scripts/**', '**/*.d.ts', 'vitest.config.ts', 'vitest.config.mjs'],
       thresholds: {
         global: {
           branches: 70,
