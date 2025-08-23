@@ -1,37 +1,85 @@
-import { Agent, Command, Hook, Settings } from '../parser/config-parser';
 import yaml from 'js-yaml';
+import type { Agent, Command, Hook, Settings } from '../parser/config-parser';
+import type { HooksConfig, StatusLine } from '../types/config.js';
 
+/**
+ * Handles the intelligent merging of configuration components from multiple sources
+ * 
+ * This class provides sophisticated merging logic for:
+ * - AI agents with tool combination and conflict resolution
+ * - Commands with override and deduplication strategies
+ * - Hooks with script combination and execution order
+ * - Settings with deep merging and permission handling
+ * 
+ * @example
+ * ```typescript
+ * const merger = new ComponentMerger();
+ * 
+ * // Merge agents from multiple configurations
+ * const agents = merger.mergeAgents([
+ *   nextjsAgents,
+ *   shadcnAgents,
+ *   customAgents
+ * ]);
+ * 
+ * // Generate final agent files
+ * agents.forEach(agent => {
+ *   const content = merger.generateAgentFile(agent);
+ *   fs.writeFileSync(`agents/${agent.name}.md`, content);
+ * });
+ * ```
+ */
 export class ComponentMerger {
+  /**
+   * Merges agent configurations from multiple sources with intelligent deduplication
+   * 
+   * Agents with similar names are merged by combining their tools and content.
+   * Later configurations take precedence for metadata like descriptions.
+   * 
+   * @param agentGroups - Array of agent arrays from different configurations
+   * @returns Merged and deduplicated array of agents
+   * 
+   * @example
+   * ```typescript
+   * const merger = new ComponentMerger();
+   * const merged = merger.mergeAgents([
+   *   [{ name: 'nextjs-expert', tools: ['fs'], content: '...' }],
+   *   [{ name: 'nextjs-expert', tools: ['web'], content: '...' }]
+   * ]);
+   * // Result: Single agent with tools: ['fs', 'web']
+   * ```
+   */
   mergeAgents(agentGroups: Agent[][]): Agent[] {
     const mergedAgents = new Map<string, Agent>();
-    
+
     for (const agents of agentGroups) {
       for (const agent of agents) {
         const key = this.normalizeKey(agent.name);
-        
+
         if (!mergedAgents.has(key)) {
           mergedAgents.set(key, agent);
         } else {
           // Merge similar agents by combining their content
-          const existing = mergedAgents.get(key)!;
+          const existing = mergedAgents.get(key);
+      if (!existing) continue;
           const merged = this.mergeAgent(existing, agent);
           mergedAgents.set(key, merged);
         }
       }
     }
-    
+
     return Array.from(mergedAgents.values());
   }
 
   private mergeAgent(agent1: Agent, agent2: Agent): Agent {
     // Combine tools from both agents
     const tools = new Set([...(agent1.tools || []), ...(agent2.tools || [])]);
-    
+
     // Combine content with source attribution
     const content = [
       `# ${agent1.name}`,
       '',
-      agent1.description || agent2.description,
+      agent2.description || agent1.description,
       '',
       '## Combined expertise from multiple configurations',
       '',
@@ -39,140 +87,167 @@ export class ComponentMerger {
       agent1.content,
       '',
       `### From ${agent2.source}:`,
-      agent2.content
+      agent2.content,
     ].join('\n');
-    
+
     return {
       name: agent1.name,
-      description: agent1.description || agent2.description,
+      description: agent2.description || agent1.description, // Prefer newer description
       tools: Array.from(tools),
       content,
-      source: `${agent1.source} + ${agent2.source}`
+      source: `${agent1.source} + ${agent2.source}`,
     };
   }
 
   mergeCommands(commandGroups: Command[][]): Command[] {
     const mergedCommands = new Map<string, Command>();
-    
+
     for (const commands of commandGroups) {
       for (const command of commands) {
         const key = this.normalizeKey(command.name);
-        
-        if (!mergedCommands.has(key)) {
-          mergedCommands.set(key, command);
-        } else {
-          // For duplicate commands, keep the more comprehensive one
-          const existing = mergedCommands.get(key)!;
-          if (command.content.length > existing.content.length) {
-            mergedCommands.set(key, command);
-          }
-        }
+
+        // Always use the latest command to override previous ones
+        mergedCommands.set(key, command);
       }
     }
-    
+
     return Array.from(mergedCommands.values());
   }
 
   mergeHooks(hookGroups: Hook[][]): Hook[] {
     const mergedHooks = new Map<string, Hook>();
-    
+
     for (const hooks of hookGroups) {
       for (const hook of hooks) {
         const key = hook.name;
-        
+
         if (!mergedHooks.has(key)) {
           mergedHooks.set(key, hook);
-        } else if (hook.type === 'script') {
-          // For scripts, combine them
-          const existing = mergedHooks.get(key)!;
-          const merged = this.mergeScriptHooks(existing, hook);
-          mergedHooks.set(key, merged);
+        } else {
+          // For duplicate hooks, use the latest one
+          mergedHooks.set(key, hook);
         }
       }
     }
-    
+
     return Array.from(mergedHooks.values());
   }
 
-  private mergeScriptHooks(hook1: Hook, hook2: Hook): Hook {
-    const content = [
-      '#!/bin/bash',
-      '',
-      `# Combined hook from ${hook1.source} and ${hook2.source}`,
-      '',
-      `# From ${hook1.source}:`,
-      hook1.content.replace(/^#!.*\n/, ''),
-      '',
-      `# From ${hook2.source}:`,
-      hook2.content.replace(/^#!.*\n/, '')
-    ].join('\n');
-    
-    return {
-      name: hook1.name,
-      type: 'script',
-      content,
-      source: `${hook1.source} + ${hook2.source}`
-    };
-  }
 
   mergeSettings(settingsArray: (Settings | null)[]): Settings {
-    const merged: Settings = {};
-    
+    const merged: Settings = {
+      permissions: {
+        allow: [],
+        deny: [],
+      },
+    };
+
     for (const settings of settingsArray) {
       if (!settings) continue;
-      
-      // Merge allow/deny arrays
+
+      // Handle permissions structure (Next.js 15 style)
+      if (settings.permissions) {
+        if (settings.permissions.allow) {
+          if (merged.permissions) {
+            merged.permissions.allow = [
+              ...(merged.permissions.allow || []),
+              ...settings.permissions.allow,
+            ];
+          }
+        }
+        if (settings.permissions.deny) {
+          if (merged.permissions) {
+            merged.permissions.deny = [
+              ...(merged.permissions.deny || []),
+              ...settings.permissions.deny,
+            ];
+          }
+        }
+      }
+
+      // Also handle legacy allow/deny at root level
       if (settings.allow) {
-        merged.allow = [...(merged.allow || []), ...settings.allow];
+        if (merged.permissions) {
+          merged.permissions.allow = [...(merged.permissions.allow || []), ...settings.allow];
+        }
       }
       if (settings.deny) {
-        merged.deny = [...(merged.deny || []), ...settings.deny];
+        if (merged.permissions) {
+          merged.permissions.deny = [...(merged.permissions.deny || []), ...settings.deny];
+        }
       }
-      
+
       // Merge environment variables
       if (settings.env) {
         merged.env = { ...(merged.env || {}), ...settings.env };
       }
-      
+
       // Merge hooks (complex merge)
       if (settings.hooks) {
         merged.hooks = this.mergeHooksConfig(merged.hooks || {}, settings.hooks);
       }
-      
+
       // Merge status line
       if (settings.statusLine) {
         merged.statusLine = this.mergeStatusLine(merged.statusLine, settings.statusLine);
       }
-      
+
       // Merge other properties
-      const otherProps = ['codeRules', 'componentPatterns', 'importOrder', 'testingFramework', 'buildTools'];
+      const otherProps = [
+        'codeRules',
+        'componentPatterns',
+        'importOrder',
+        'testingFramework',
+        'buildTools',
+      ];
       for (const prop of otherProps) {
         if (settings[prop]) {
-          merged[prop] = this.deepMerge(merged[prop] || {}, settings[prop]);
+          const currentValue = merged[prop] as Record<string, unknown> || {};
+          merged[prop] = this.deepMerge(currentValue, settings[prop] as Record<string, unknown>);
         }
       }
     }
-    
-    // Deduplicate arrays
+
+    // Deduplicate arrays in permissions
+    if (merged.permissions) {
+      if (merged.permissions.allow) {
+        merged.permissions.allow = [...new Set(merged.permissions.allow)];
+      }
+      if (merged.permissions.deny) {
+        merged.permissions.deny = [...new Set(merged.permissions.deny)];
+      }
+    }
+
+    // Also deduplicate legacy arrays if they exist
     if (merged.allow) {
       merged.allow = [...new Set(merged.allow)];
     }
     if (merged.deny) {
       merged.deny = [...new Set(merged.deny)];
     }
-    
+
     return merged;
   }
 
-  private mergeHooksConfig(hooks1: any, hooks2: any): any {
-    const merged: any = {};
+  private mergeHooksConfig(hooks1: HooksConfig, hooks2: HooksConfig): HooksConfig {
+    const merged: HooksConfig = {};
+
+    // Handle both camelCase and PascalCase hook types
+    const hookTypes = ['PreToolUse', 'PostToolUse', 'Stop', 'preToolUse', 'postToolUse', 'stop'];
     
-    const hookTypes = ['preToolUse', 'postToolUse', 'stop'];
     for (const type of hookTypes) {
       if (hooks1[type] || hooks2[type]) {
-        const items1 = Array.isArray(hooks1[type]) ? hooks1[type] : (hooks1[type] ? [hooks1[type]] : []);
-        const items2 = Array.isArray(hooks2[type]) ? hooks2[type] : (hooks2[type] ? [hooks2[type]] : []);
-        
+        const items1 = Array.isArray(hooks1[type])
+          ? hooks1[type]
+          : hooks1[type]
+            ? [hooks1[type]]
+            : [];
+        const items2 = Array.isArray(hooks2[type])
+          ? hooks2[type]
+          : hooks2[type]
+            ? [hooks2[type]]
+            : [];
+
         const combined = [...items1, ...items2];
         if (combined.length === 1) {
           merged[type] = combined[0];
@@ -181,39 +256,42 @@ export class ComponentMerger {
         }
       }
     }
-    
+
     return merged;
   }
 
-  private mergeStatusLine(status1: any, status2: any): any {
+  private mergeStatusLine(status1: StatusLine | undefined, status2: StatusLine | undefined): StatusLine | undefined {
     if (!status1) return status2;
     if (!status2) return status1;
-    
-    return {
-      template: status1.template || status2.template,
-      variables: { ...(status1.variables || {}), ...(status2.variables || {}) }
-    };
+
+    // For statusLine, the later one wins completely as it's a command string
+    // We can't meaningfully merge two different status line commands
+    return status2;
   }
 
-  private deepMerge(obj1: any, obj2: any): any {
+  private deepMerge(obj1: Record<string, unknown>, obj2: Record<string, unknown>): Record<string, unknown> {
+    // Handle arrays separately - return as-is since they're not Record types
     if (Array.isArray(obj1) && Array.isArray(obj2)) {
-      return [...obj1, ...obj2];
+      return [...obj1, ...obj2] as unknown as Record<string, unknown>;
     }
-    
-    if (typeof obj1 === 'object' && typeof obj2 === 'object') {
-      const merged: any = { ...obj1 };
-      
+
+    if (typeof obj1 === 'object' && typeof obj2 === 'object' && obj1 !== null && obj2 !== null && !Array.isArray(obj1) && !Array.isArray(obj2)) {
+      const merged: Record<string, unknown> = { ...obj1 };
+
       for (const key in obj2) {
-        if (key in merged) {
-          merged[key] = this.deepMerge(merged[key], obj2[key]);
+        if (key in merged && typeof merged[key] === 'object' && typeof obj2[key] === 'object') {
+          merged[key] = this.deepMerge(
+            merged[key] as Record<string, unknown>, 
+            obj2[key] as Record<string, unknown>
+          );
         } else {
           merged[key] = obj2[key];
         }
       }
-      
+
       return merged;
     }
-    
+
     return obj2;
   }
 
@@ -225,38 +303,26 @@ export class ComponentMerger {
     const frontmatter = {
       name: agent.name,
       description: agent.description,
-      tools: agent.tools
+      tools: agent.tools,
     };
-    
-    return [
-      '---',
-      yaml.dump(frontmatter).trim(),
-      '---',
-      '',
-      agent.content
-    ].join('\n');
+
+    return ['---', yaml.dump(frontmatter).trim(), '---', '', agent.content].join('\n');
   }
 
   generateCommandFile(command: Command): string {
-    const frontmatter: any = {
+    const frontmatter: Record<string, unknown> = {
       name: command.name,
-      description: command.description
+      description: command.description,
     };
-    
+
     if (command.allowedTools?.length) {
       frontmatter['allowed-tools'] = command.allowedTools;
     }
-    
+
     if (command.argumentHint) {
       frontmatter['argument-hint'] = command.argumentHint;
     }
-    
-    return [
-      '---',
-      yaml.dump(frontmatter).trim(),
-      '---',
-      '',
-      command.content
-    ].join('\n');
+
+    return ['---', yaml.dump(frontmatter).trim(), '---', '', command.content].join('\n');
   }
 }

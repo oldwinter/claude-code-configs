@@ -1,27 +1,101 @@
-# Claude Config Composer
+# Claude Config Composer (Beta v1.0.0-beta.1)
 
-Dynamic Claude Code configuration generator that intelligently combines multiple configs based on your development stack.
+Generate custom Claude Code configurations for your exact tech stack.
 
-## Problem
+🚧 **Beta Release:** v1.0.0-beta.1 - Production-ready but not yet on NPM. Use local installation method below.
+📦 **NPM Package:** Coming in v1.0.0 with `npx` support!
 
-Currently, Claude Code configs are isolated. If you want to build a Next.js 15 app with shadcn/ui components, you need to manually combine configurations. This tool solves that by intelligently merging configs while:
+## 🚀 Quick Start (Current - Local Installation)
 
-- Avoiding duplicate sections
-- Preserving critical framework-specific information
-- Handling dependencies and conflicts
-- Maintaining proper section priorities
+```bash
+# One-time setup
+git clone https://github.com/Matt-Dionis/claude-code-configs.git
+cd claude-code-configs/claude-config-composer
+npm install && npm run build
+
+# Use from your project directory
+cd /path/to/your/project
+node /path/to/claude-code-configs/claude-config-composer/dist/cli.js nextjs-15 shadcn
+```
+
+## 🔜 Coming Soon: Zero Installation with NPX
+
+Once published to npm, you'll be able to run without any installation:
+
+```bash
+# In your project directory
+npx claude-config-composer nextjs-15 shadcn
+# Your .claude/ directory is created instantly
+```
+
+## Common Stacks
+
+```bash
+# Using the local installation path from above:
+COMPOSER=/path/to/claude-code-configs/claude-config-composer/dist/cli.js
+
+# Next.js + shadcn/ui
+node $COMPOSER nextjs-15 shadcn
+
+# Full-stack Next.js
+node $COMPOSER nextjs-15 shadcn prisma trpc typescript
+
+# React + shadcn/ui
+node $COMPOSER react-19 shadcn tanstack typescript
+```
 
 ## Features
 
-- **Complete .claude Generation**: Creates full configuration with agents, commands, hooks, and settings
-- **Interactive CLI**: Select your stack through an intuitive interface
-- **Intelligent Merging**: Smart deduplication and section prioritization
-- **Preset Stacks**: Quick selection for common combinations
-- **Conflict Detection**: Warns about incompatible configurations
-- **Dependency Resolution**: Automatically suggests required dependencies
-- **Category-based Selection**: Choose configs by type (framework, UI, database, etc.)
+✅ **Zero installation** - Will use npx once published, leaving no trace
+✅ **Intelligent merging** - Combines configs without duplication
+✅ **Automatic backups** - Preserves existing .claude/ configs
+✅ **Git-friendly** - Auto-adds to .gitignore
+✅ **Production ready** - Generated configs work immediately
+✅ **Conflict detection** - Warns about incompatible configurations
+✅ **Dependency resolution** - Automatically suggests required dependencies
 
-## Installation
+## Advanced Usage
+
+### Interactive Mode
+```bash
+# Opens interactive selection UI
+node /path/to/claude-config-composer/dist/cli.js
+```
+
+### List Available Configs
+```bash
+node /path/to/claude-config-composer/dist/cli.js list
+```
+
+### Custom Output Directory
+```bash
+node /path/to/claude-config-composer/dist/cli.js nextjs-15 shadcn --output .claude-custom
+```
+
+### Skip Backup/Gitignore
+```bash
+node /path/to/claude-config-composer/dist/cli.js nextjs-15 shadcn --no-backup --no-gitignore
+```
+
+## What Gets Generated
+
+```
+.claude/
+├── CLAUDE.md           # Combined documentation
+├── .claude/
+│   ├── settings.json   # Merged settings
+│   ├── agents/         # Framework-specific agents
+│   ├── commands/       # Custom commands
+│   └── hooks/          # Development hooks
+├── README.md
+└── package.json
+```
+
+---
+
+## 🛠️ Development & Contributing
+
+### Local Development Setup
 
 ```bash
 # Clone the config repository
@@ -34,36 +108,8 @@ npm install
 # Build the CLI
 npm run build
 
-# Link globally (optional)
-npm link
-```
-
-## Usage
-
-### Interactive Mode
-
-```bash
-# Run interactive selection
-npm run dev
-
-# Or if linked globally
-claude-compose
-```
-
-### Generate Preset
-
-```bash
-# Generate a Next.js + shadcn configuration
-npm run dev generate nextjs-shadcn
-
-# Generate a full-stack configuration
-npm run dev generate nextjs-fullstack
-```
-
-### List Available Configs
-
-```bash
-npm run dev list
+# Test locally
+npm run dev nextjs-15 shadcn
 ```
 
 ## Available Configurations

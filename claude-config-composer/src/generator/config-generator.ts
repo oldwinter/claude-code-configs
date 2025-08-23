@@ -1,9 +1,19 @@
+import chalk from 'chalk';
 import fs from 'fs/promises';
+import ora from 'ora';
 import path from 'path';
-import { ConfigParser } from '../parser/config-parser';
 import { ComponentMerger } from '../merger/component-merger';
 import { ConfigMerger } from '../merger/config-merger';
-import { ConfigMetadata } from '../registry/config-registry';
+import { ConfigParser } from '../parser/config-parser';
+import type { ConfigMetadata } from '../registry/config-registry';
+import {
+  ErrorHandler,
+  FileSystemError,
+  GenerationError,
+  ValidationError,
+} from '../utils/error-handler';
+import { InputValidator } from '../utils/input-validator';
+import { PathValidationError, PathValidator } from '../utils/path-validator';
 
 export class ConfigGenerator {
   private parser: ConfigParser;
@@ -18,181 +28,263 @@ export class ConfigGenerator {
 
   async generateCompleteConfig(
     configs: Array<{ path: string; metadata: ConfigMetadata }>,
-    outputDir: string
+    outputDir: string,
+    showProgress: boolean = true
   ): Promise<void> {
-    // Parse all configurations
-    const parsedConfigs = await Promise.all(
-      configs.map(async (config) => ({
-        metadata: config.metadata,
-        parsed: await this.parser.parseConfigDirectory(config.path)
-      }))
-    );
+    // Validate and sanitize the output directory path
+    try {
+      const sanitizedOutputDir = PathValidator.validatePath(outputDir);
+      // Use the sanitized path for all operations
+      const resolvedOutputDir = path.resolve(sanitizedOutputDir);
+      outputDir = resolvedOutputDir;
+    } catch (error) {
+      throw new Error(
+        `Invalid output directory: ${error instanceof PathValidationError ? error.message : 'Unknown error'}`
+      );
+    }
 
-    // Create output directories
+    // Validate input configurations
+    try {
+      InputValidator.validateArrayBounds(configs, 1, 10, 'configuration');
+      for (const config of configs) {
+        InputValidator.validateConfigMetadata(config.metadata);
+        // Use validateInternalPath for trusted registry paths (which are absolute)
+        PathValidator.validateInternalPath(config.path);
+      }
+    } catch (error) {
+      throw new Error(
+        `Invalid configuration input: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+    const steps = [
+      'Parsing configurations',
+      'Creating directory structure',
+      'Merging CLAUDE.md',
+      'Processing agents',
+      'Processing commands',
+      'Processing hooks',
+      'Generating settings',
+      'Finalizing configuration',
+      'Validating structure',
+    ];
+
+    let currentStep = 0;
+    const spinner = showProgress ? ora(steps[currentStep]).start() : null;
+
+    try {
+      // Parse all configurations
+      const parsedConfigs = await Promise.all(
+        configs.map(async config => ({
+          metadata: config.metadata,
+          parsed: await this.parser.parseConfigDirectory(config.path),
+        }))
+      );
+      if (spinner) spinner.succeed(steps[currentStep]);
+
+      // Create proper directory structure
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+
+      // Securely create directories
+      const claudeDir = await PathValidator.createSafeDirectory('.claude', outputDir);
+      const agentsDir = await PathValidator.createSafeDirectory('.claude/agents', outputDir);
+      const commandsDir = await PathValidator.createSafeDirectory('.claude/commands', outputDir);
+      const hooksDir = await PathValidator.createSafeDirectory('.claude/hooks', outputDir);
+
+      await fs.mkdir(outputDir, { recursive: true });
+      await fs.mkdir(claudeDir, { recursive: true });
+      await fs.mkdir(agentsDir, { recursive: true });
+      await fs.mkdir(commandsDir, { recursive: true });
+      await fs.mkdir(hooksDir, { recursive: true });
+      if (spinner) spinner.succeed(steps[currentStep]);
+
+      // Merge and write CLAUDE.md at the root of outputDir
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const claudeMdConfigs = parsedConfigs
+        .filter(c => c.parsed.claudeMd)
+        .map(c => ({
+          content: c.parsed.claudeMd || '',
+          metadata: c.metadata,
+          dependencies: c.parsed.dependencies,
+        }));
+
+      if (claudeMdConfigs.length > 0) {
+        const mergedClaudeMd = this.configMerger.merge(claudeMdConfigs);
+        const claudeMdPath = await PathValidator.createSafeFilePath('CLAUDE.md', '.', outputDir);
+        await fs.writeFile(claudeMdPath, mergedClaudeMd);
+      }
+      if (spinner) spinner.succeed(steps[currentStep]);
+
+      // Merge and write agents to .claude/agents/
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const agentGroups = parsedConfigs.map(c => c.parsed.agents);
+      const mergedAgents = this.componentMerger.mergeAgents(agentGroups);
+
+      for (const agent of mergedAgents) {
+        // Validate and sanitize agent data
+        const validatedAgent = InputValidator.validateAgent(agent);
+        const agentName = typeof validatedAgent.name === 'string' ? validatedAgent.name : 'unknown';
+        const filename = `${PathValidator.validateFilename(agentName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
+        const content = this.componentMerger.generateAgentFile(validatedAgent);
+        const agentPath = await PathValidator.createSafeFilePath(
+          filename,
+          '.claude/agents',
+          outputDir
+        );
+        await fs.writeFile(agentPath, content);
+      }
+      if (spinner) spinner.text = `${steps[currentStep]} (${mergedAgents.length} agents)`;
+      if (spinner) spinner.succeed();
+
+      // Merge and write commands to .claude/commands/
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const commandGroups = parsedConfigs.map(c => c.parsed.commands);
+      const mergedCommands = this.componentMerger.mergeCommands(commandGroups);
+
+      for (const command of mergedCommands) {
+        // Validate and sanitize command data
+        const validatedCommand = InputValidator.validateCommand(command);
+        const commandName =
+          typeof validatedCommand.name === 'string' ? validatedCommand.name : 'unknown';
+        const filename = `${PathValidator.validateFilename(commandName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
+        const content = this.componentMerger.generateCommandFile(validatedCommand);
+        const commandPath = await PathValidator.createSafeFilePath(
+          filename,
+          '.claude/commands',
+          outputDir
+        );
+        await fs.writeFile(commandPath, content);
+      }
+      if (spinner) spinner.text = `${steps[currentStep]} (${mergedCommands.length} commands)`;
+      if (spinner) spinner.succeed();
+
+      // Merge and write hooks to .claude/hooks/
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const hookGroups = parsedConfigs.map(c => c.parsed.hooks);
+      const mergedHooks = this.componentMerger.mergeHooks(hookGroups);
+
+      for (const hook of mergedHooks) {
+        // Validate and sanitize hook data
+        const validatedHook = InputValidator.validateHook(hook);
+        const hookName =
+          typeof validatedHook.name === 'string' ? validatedHook.name : 'unknown-hook';
+        const hookContent = typeof validatedHook.content === 'string' ? validatedHook.content : '';
+        const hookPath = await PathValidator.createSafeFilePath(
+          hookName,
+          '.claude/hooks',
+          outputDir
+        );
+        await fs.writeFile(hookPath, hookContent);
+      }
+      if (spinner) spinner.text = `${steps[currentStep]} (${mergedHooks.length} hooks)`;
+      if (spinner) spinner.succeed();
+
+      // Merge and write settings.json to .claude/
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const settingsArray = parsedConfigs.map(c => c.parsed.settings);
+      const mergedSettings = this.componentMerger.mergeSettings(settingsArray);
+
+      // Do NOT add _metadata to settings - it's not allowed in Claude Code settings.json schema
+      // The _metadata was for internal tracking but should not be in the final output
+
+      // Debug: log merged settings before validation
+      if (process.env.DEBUG) {
+        console.log('Merged settings before validation:', JSON.stringify(mergedSettings, null, 2));
+      }
+
+      // Validate the merged settings
+      const validatedSettings = InputValidator.validateSettings(mergedSettings);
+      
+      // Debug: log validated settings
+      if (process.env.DEBUG) {
+        console.log('Validated settings:', JSON.stringify(validatedSettings, null, 2));
+      }
+      
+      const settingsPath = await PathValidator.createSafeFilePath(
+        'settings.json',
+        '.claude',
+        outputDir
+      );
+
+      await fs.writeFile(settingsPath, JSON.stringify(validatedSettings, null, 2));
+      if (spinner) spinner.succeed(steps[currentStep]);
+
+      // Skip README and package.json generation - these conflict with existing project files
+
+      // Validate the generated structure
+      currentStep++;
+      if (spinner) spinner.start(steps[currentStep]);
+      const validation = await this.validateGeneratedStructure(outputDir);
+      if (!validation.valid) {
+        if (spinner) spinner.warn(`${steps[currentStep]} - ${validation.errors.length} warnings`);
+        validation.errors.forEach(error => console.warn(chalk.yellow(`   - ${error}`)));
+      } else {
+        if (spinner) spinner.succeed(steps[currentStep]);
+      }
+    } catch (error) {
+      if (spinner) spinner.fail(`Failed at: ${steps[currentStep]}`);
+      throw error;
+    }
+  }
+
+  async validateGeneratedStructure(
+    outputDir: string
+  ): Promise<{ valid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    // Check required files at root
+    const requiredRootFiles = ['CLAUDE.md'];
+    for (const file of requiredRootFiles) {
+      const filePath = path.join(outputDir, file);
+      try {
+        await fs.access(filePath);
+      } catch {
+        errors.push(`Missing required file: ${file}`);
+      }
+    }
+
+    // Check .claude directory structure
     const claudeDir = path.join(outputDir, '.claude');
-    await fs.mkdir(claudeDir, { recursive: true });
-    await fs.mkdir(path.join(claudeDir, 'agents'), { recursive: true });
-    await fs.mkdir(path.join(claudeDir, 'commands'), { recursive: true });
-    await fs.mkdir(path.join(claudeDir, 'hooks'), { recursive: true });
-
-    // Merge CLAUDE.md
-    const claudeMdConfigs = parsedConfigs
-      .filter(c => c.parsed.claudeMd)
-      .map(c => ({
-        content: c.parsed.claudeMd!,
-        metadata: c.metadata
-      }));
-    
-    if (claudeMdConfigs.length > 0) {
-      const mergedClaudeMd = this.configMerger.merge(claudeMdConfigs);
-      await fs.writeFile(path.join(outputDir, 'CLAUDE.md'), mergedClaudeMd);
+    try {
+      await fs.access(claudeDir);
+    } catch {
+      errors.push('Missing .claude directory');
+      return { valid: false, errors };
     }
 
-    // Merge and write agents
-    const agentGroups = parsedConfigs.map(c => c.parsed.agents);
-    const mergedAgents = this.componentMerger.mergeAgents(agentGroups);
-    
-    for (const agent of mergedAgents) {
-      const filename = `${agent.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}.md`;
-      const content = this.componentMerger.generateAgentFile(agent);
-      await fs.writeFile(path.join(claudeDir, 'agents', filename), content);
+    // Check required subdirectories
+    const requiredDirs = ['agents', 'commands', 'hooks'];
+    for (const dir of requiredDirs) {
+      const dirPath = path.join(claudeDir, dir);
+      try {
+        await fs.access(dirPath);
+      } catch {
+        errors.push(`Missing .claude/${dir} directory`);
+      }
     }
 
-    // Merge and write commands
-    const commandGroups = parsedConfigs.map(c => c.parsed.commands);
-    const mergedCommands = this.componentMerger.mergeCommands(commandGroups);
-    
-    for (const command of mergedCommands) {
-      const filename = `${command.name.toLowerCase().replace(/[^a-z0-9-]/g, '-')}.md`;
-      const content = this.componentMerger.generateCommandFile(command);
-      await fs.writeFile(path.join(claudeDir, 'commands', filename), content);
+    // Check settings.json
+    const settingsPath = path.join(claudeDir, 'settings.json');
+    try {
+      await fs.access(settingsPath);
+      const settingsContent = await fs.readFile(settingsPath, 'utf-8');
+      const settings = JSON.parse(settingsContent);
+      // Don't check for _metadata as it's not part of the Claude Code settings.json schema
+      // Just verify the JSON is valid
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        errors.push('Missing .claude/settings.json');
+      } else {
+        errors.push('Invalid settings.json format');
+      }
     }
 
-    // Merge and write hooks
-    const hookGroups = parsedConfigs.map(c => c.parsed.hooks);
-    const mergedHooks = this.componentMerger.mergeHooks(hookGroups);
-    
-    for (const hook of mergedHooks) {
-      await fs.writeFile(path.join(claudeDir, 'hooks', hook.name), hook.content);
-    }
-
-    // Merge and write settings.json
-    const settingsArray = parsedConfigs.map(c => c.parsed.settings);
-    const mergedSettings = this.componentMerger.mergeSettings(settingsArray);
-    
-    // Add metadata to settings
-    mergedSettings._metadata = {
-      generated: new Date().toISOString(),
-      generator: 'claude-config-composer@1.0.0',
-      sources: configs.map(c => c.metadata.name),
-      note: 'This is a composed configuration. Review and adjust as needed.'
-    };
-    
-    await fs.writeFile(
-      path.join(claudeDir, 'settings.json'),
-      JSON.stringify(mergedSettings, null, 2)
-    );
-
-    // Generate README
-    await this.generateReadme(outputDir, configs.map(c => c.metadata));
-
-    // Generate package.json
-    await this.generatePackageJson(outputDir, configs.map(c => c.metadata));
+    return { valid: errors.length === 0, errors };
   }
 
-  private async generateReadme(outputDir: string, metadata: ConfigMetadata[]): Promise<void> {
-    const content = [
-      '# Composed Claude Code Configuration',
-      '',
-      'This configuration was dynamically generated by Claude Config Composer.',
-      '',
-      '## Included Configurations',
-      '',
-      ...metadata.map(m => `- **${m.name}** (v${m.version}): ${m.description}`),
-      '',
-      '## Structure',
-      '',
-      '```',
-      '.claude/',
-      '├── settings.json    # Merged settings and permissions',
-      '├── agents/          # Specialized AI agents',
-      '├── commands/        # Custom commands',
-      '└── hooks/           # Automation scripts',
-      'CLAUDE.md            # Main configuration document',
-      '```',
-      '',
-      '## Usage',
-      '',
-      '1. Ensure Claude Code can access this directory',
-      '2. The configuration will be automatically loaded',
-      '3. Use custom commands with `/` prefix',
-      '4. Agents are automatically available for specialized tasks',
-      '',
-      '## Customization',
-      '',
-      'You can modify any file in this configuration to suit your needs:',
-      '',
-      '- Edit `.claude/settings.json` to adjust permissions and settings',
-      '- Modify agents in `.claude/agents/` for specialized behavior',
-      '- Update commands in `.claude/commands/` for custom workflows',
-      '- Adjust hooks in `.claude/hooks/` for automation',
-      '',
-      '## Compatibility Notes',
-      '',
-      'This is a composed configuration. Some features may require adjustment:',
-      '',
-      '- Review merged settings for conflicts',
-      '- Test custom commands in your environment',
-      '- Verify hook scripts work with your setup',
-      '- Check agent tools match your permissions',
-      '',
-      '## Support',
-      '',
-      'For issues or questions, refer to the original configurations:',
-      ...metadata.map(m => `- ${m.name}: ${m.path}`),
-      '',
-      `Generated: ${new Date().toISOString()}`,
-      'Generator: Claude Config Composer v1.0.0'
-    ].join('\n');
-
-    await fs.writeFile(path.join(outputDir, 'README.md'), content);
-  }
-
-  private async generatePackageJson(outputDir: string, metadata: ConfigMetadata[]): Promise<void> {
-    const packageJson = {
-      name: 'composed-claude-config',
-      version: '1.0.0',
-      description: `Claude Code configuration for: ${metadata.map(m => m.name).join(', ')}`,
-      'claude-config': {
-        version: '1.0.0',
-        type: 'composed',
-        sources: metadata.map(m => ({
-          id: m.id,
-          name: m.name,
-          version: m.version,
-          category: m.category
-        })),
-        features: {
-          agents: true,
-          commands: true,
-          hooks: true,
-          settings: true
-        },
-        generatedAt: new Date().toISOString(),
-        generator: 'claude-config-composer@1.0.0'
-      },
-      keywords: [
-        'claude-code',
-        'ai-assistant',
-        'development-config',
-        ...metadata.map(m => m.id)
-      ],
-      private: true
-    };
-
-    await fs.writeFile(
-      path.join(outputDir, 'package.json'),
-      JSON.stringify(packageJson, null, 2)
-    );
-  }
 }

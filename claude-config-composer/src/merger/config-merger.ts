@@ -1,4 +1,5 @@
-import { ConfigMetadata } from '../registry/config-registry';
+import type { ConfigMetadata } from '../registry/config-registry';
+import { ConfigurationError, ErrorHandler, ValidationError } from '../utils/error-handler';
 
 interface Section {
   title: string;
@@ -6,152 +7,296 @@ interface Section {
   level: number;
   source: string;
   priority: number;
+  mergeable?: boolean;
 }
 
 export class ConfigMerger {
   private sections: Map<string, Section[]> = new Map();
 
   parseMarkdown(content: string, source: string, metadata?: ConfigMetadata): Section[] {
-    const sections: Section[] = [];
-    const lines = content.split('\n');
-    
-    let currentSection: Section | null = null;
-    let contentBuffer: string[] = [];
+    try {
+      if (!content || typeof content !== 'string') {
+        throw new ConfigurationError(`Invalid content provided for parsing from source: ${source}`);
+      }
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+      if (!source || typeof source !== 'string') {
+        throw new ValidationError('Source identifier is required for markdown parsing');
+      }
 
-      if (headerMatch) {
-        if (currentSection) {
-          currentSection.content = contentBuffer.join('\n').trim();
-          if (currentSection.content) {
+      const sections: Section[] = [];
+      const lines = content.split('\n');
+
+      let currentSection: Section | null = null;
+      let contentBuffer: string[] = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+
+        if (headerMatch) {
+          if (currentSection) {
+            currentSection.content = contentBuffer.join('\n').trim();
+            // Include section even if it has no content (title-only sections)
             sections.push(currentSection);
           }
+
+          const level = headerMatch[1].length;
+          const title = headerMatch[2].trim();
+
+          // Validate section title
+          if (!title) {
+            ErrorHandler.warn(
+              new ConfigurationError(`Empty section title found at line ${i + 1} in ${source}`),
+              'parse-markdown'
+            );
+            continue;
+          }
+
+          const sectionMetadata = metadata?.sections?.find(
+            s => s.title.toLowerCase() === title.toLowerCase()
+          );
+
+          currentSection = {
+            title,
+            content: '',
+            level: Math.min(level, 6), // Ensure level doesn't exceed 6
+            source,
+            priority: sectionMetadata?.priority ?? 0,
+            mergeable: sectionMetadata?.mergeable ?? true,
+          };
+          contentBuffer = [];
+        } else {
+          contentBuffer.push(line);
         }
-
-        const level = headerMatch[1].length;
-        const title = headerMatch[2].trim();
-        
-        const sectionMetadata = metadata?.sections?.find(s => 
-          s.title.toLowerCase() === title.toLowerCase()
-        );
-
-        currentSection = {
-          title,
-          content: '',
-          level,
-          source,
-          priority: sectionMetadata?.priority ?? 0
-        };
-        contentBuffer = [];
-      } else {
-        contentBuffer.push(line);
       }
-    }
 
-    if (currentSection) {
-      currentSection.content = contentBuffer.join('\n').trim();
-      if (currentSection.content) {
+      if (currentSection) {
+        currentSection.content = contentBuffer.join('\n').trim();
+        // Include section even if it has no content (title-only sections)
         sections.push(currentSection);
       }
-    }
 
-    return sections;
+      return sections;
+    } catch (error) {
+      if (error instanceof ConfigurationError || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new ConfigurationError(
+        `Failed to parse markdown from ${source}: ${error instanceof Error ? error.message : String(error)}`,
+        error as Error
+      );
+    }
   }
 
-  addConfig(content: string, metadata: ConfigMetadata) {
-    const sections = this.parseMarkdown(content, metadata.name, metadata);
-    
-    for (const section of sections) {
-      const key = this.normalizeTitle(section.title);
-      
-      if (!this.sections.has(key)) {
-        this.sections.set(key, []);
+  addConfig(content: string, metadata: ConfigMetadata): void {
+    try {
+      if (!metadata) {
+        throw new ValidationError('Configuration metadata is required');
       }
-      
-      this.sections.get(key)!.push(section);
+
+      if (!metadata.name) {
+        throw new ValidationError('Configuration metadata must have a name');
+      }
+
+      const sections = this.parseMarkdown(content, metadata.name, metadata);
+
+      for (const section of sections) {
+        try {
+          // Use normalized title for grouping similar sections
+          const key = this.normalizeTitle(section.title);
+
+          if (!this.sections.has(key)) {
+            this.sections.set(key, []);
+          }
+
+          this.sections.get(key)!.push(section);
+        } catch (error) {
+          ErrorHandler.warn(
+            new ConfigurationError(
+              `Failed to process section "${section.title}" from ${metadata.name}: ${error instanceof Error ? error.message : String(error)}`,
+              error as Error
+            ),
+            'add-config-section'
+          );
+        }
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      throw new ConfigurationError(
+        `Failed to add configuration: ${error instanceof Error ? error.message : String(error)}`,
+        error as Error
+      );
     }
   }
 
   private normalizeTitle(title: string): string {
-    return title.toLowerCase()
+    return title
+      .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
 
-  merge(configs: Array<{ content: string; metadata: ConfigMetadata }>): string {
-    this.sections.clear();
-
-    for (const { content, metadata } of configs) {
-      this.addConfig(content, metadata);
-    }
-
-    const output: string[] = [];
-    const processedSections = new Set<string>();
-
-    output.push(`# Composed Claude Code Configuration`);
-    output.push('');
-    output.push(`This configuration combines: ${configs.map(c => c.metadata.name).join(', ')}`);
-    output.push('');
-    output.push('---');
-    output.push('');
-
-    const prioritizedSections = this.getPrioritizedSections();
-
-    for (const [key, sections] of prioritizedSections) {
-      if (processedSections.has(key)) continue;
-
-      const bestSection = this.selectBestSection(sections);
+  merge(configs: Array<{ content: string; metadata: ConfigMetadata; dependencies?: any }>): string {
+    return ErrorHandler.wrapSync(() => {
+      // Validate inputs
+      if (!configs || !Array.isArray(configs)) {
+        throw new ValidationError('Configurations must be provided as an array');
+      }
       
-      if (this.shouldMergeSections(sections)) {
-        const merged = this.mergeSimilarSections(sections);
-        output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
-        output.push('');
-        output.push(merged);
-        output.push('');
-      } else {
-        output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
-        output.push('');
-        output.push(bestSection.content);
-        output.push('');
+      // Handle empty configuration list with default output
+      if (configs.length === 0) {
+        return this.createEmptyConfiguration();
       }
 
-      processedSections.add(key);
-    }
+      // Validate each config
+      for (let i = 0; i < configs.length; i++) {
+        const config = configs[i];
+        if (!config || typeof config !== 'object') {
+          throw new ValidationError(`Invalid configuration at index ${i}`);
+        }
+        if (!config.content || typeof config.content !== 'string') {
+          throw new ValidationError(`Configuration at index ${i} has invalid content`);
+        }
+        if (!config.metadata) {
+          throw new ValidationError(`Configuration at index ${i} is missing metadata`);
+        }
+      }
 
-    this.addMetadata(output, configs);
+      this.sections.clear();
 
-    return output.join('\n');
+      // Add all configurations
+      for (const { content, metadata } of configs) {
+        try {
+          this.addConfig(content, metadata);
+        } catch (error) {
+          ErrorHandler.warn(
+            new ConfigurationError(
+              `Failed to add configuration ${metadata.name}: ${error instanceof Error ? error.message : String(error)}`,
+              error as Error
+            ),
+            'merge-add-config'
+          );
+        }
+      }
+
+      // Check if we have any sections to merge
+      if (this.sections.size === 0) {
+        throw new ConfigurationError(
+          'No valid sections found to merge from provided configurations'
+        );
+      }
+
+      const output: string[] = [];
+      const processedSections = new Set<string>();
+
+      // Generate header
+      try {
+        output.push(`# Composed Claude Code Configuration`);
+        output.push('');
+        output.push(`This configuration combines: ${configs.map(c => c.metadata.name).join(', ')}`);
+        output.push('');
+        output.push('---');
+        output.push('');
+      } catch (error) {
+        ErrorHandler.warn(
+          new ConfigurationError(
+            `Failed to generate header: ${error instanceof Error ? error.message : String(error)}`,
+            error as Error
+          ),
+          'merge-header'
+        );
+      }
+
+      try {
+        const prioritizedSections = this.getPrioritizedSections();
+
+        for (const [key, sections] of prioritizedSections) {
+          if (processedSections.has(key)) continue;
+
+          try {
+            const bestSection = this.selectBestSection(sections);
+
+            if (this.shouldMergeSections(sections)) {
+              const merged = this.mergeSimilarSections(sections);
+              output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
+              output.push('');
+              output.push(merged);
+              output.push('');
+            } else {
+              output.push(`${'#'.repeat(Math.min(bestSection.level, 2))} ${bestSection.title}`);
+              output.push('');
+              output.push(bestSection.content);
+              output.push('');
+            }
+
+            processedSections.add(key);
+          } catch (error) {
+            ErrorHandler.warn(
+              new ConfigurationError(
+                `Failed to process section group "${key}": ${error instanceof Error ? error.message : String(error)}`,
+                error as Error
+              ),
+              'merge-section'
+            );
+          }
+        }
+      } catch (error) {
+        throw new ConfigurationError(
+          `Failed to process sections: ${error instanceof Error ? error.message : String(error)}`,
+          error as Error
+        );
+      }
+
+      try {
+        this.addMetadata(output, configs);
+      } catch (error) {
+        ErrorHandler.warn(
+          new ConfigurationError(
+            `Failed to add metadata: ${error instanceof Error ? error.message : String(error)}`,
+            error as Error
+          ),
+          'merge-metadata'
+        );
+      }
+
+      const result = output.join('\n');
+      if (!result.trim()) {
+        throw new ConfigurationError('Merge resulted in empty configuration');
+      }
+
+      return result;
+    }, 'merge-configurations');
   }
 
   private getPrioritizedSections(): Array<[string, Section[]]> {
     const entries = Array.from(this.sections.entries());
-    
+
     return entries.sort(([keyA, sectionsA], [keyB, sectionsB]) => {
       const maxPriorityA = Math.max(...sectionsA.map(s => s.priority));
       const maxPriorityB = Math.max(...sectionsB.map(s => s.priority));
-      
+
       if (maxPriorityA !== maxPriorityB) {
         return maxPriorityB - maxPriorityA;
       }
 
       const orderMap: Record<string, number> = {
         'project context': 100,
-        'critical': 90,
+        critical: 90,
         'core principles': 85,
         'technology stack': 80,
         'breaking changes': 75,
         'file conventions': 70,
-        'patterns': 65,
+        patterns: 65,
         'common commands': 60,
-        'security': 55,
-        'performance': 50,
-        'testing': 45,
-        'deployment': 40,
-        'debugging': 35,
-        'resources': 30,
+        security: 55,
+        performance: 50,
+        testing: 45,
+        deployment: 40,
+        debugging: 35,
+        resources: 30,
       };
 
       for (const [pattern, order] of Object.entries(orderMap)) {
@@ -178,17 +323,28 @@ export class ConfigMerger {
 
   private shouldMergeSections(sections: Section[]): boolean {
     if (sections.length <= 1) return false;
-    
+
+    // Check if any section is marked as non-mergeable
+    if (sections.some(s => s.mergeable === false)) {
+      return false;
+    }
+
     const titles = sections.map(s => this.normalizeTitle(s.title));
     const uniqueTitles = new Set(titles);
-    
+
     if (uniqueTitles.size > 1) return false;
 
     const mergeableKeywords = [
-      'commands', 'common commands', 'development',
-      'testing', 'security', 'performance',
-      'project context', 'technology stack',
-      'dependencies', 'scripts'
+      'commands',
+      'common commands',
+      'development',
+      'testing',
+      'security',
+      'performance',
+      'project context',
+      'technology stack',
+      'dependencies',
+      'scripts',
     ];
 
     const title = titles[0];
@@ -198,25 +354,25 @@ export class ConfigMerger {
   private mergeSimilarSections(sections: Section[]): string {
     const mergedContent: string[] = [];
     const sources = [...new Set(sections.map(s => s.source))];
-    
+
     mergedContent.push(`*Combined from: ${sources.join(', ')}*`);
     mergedContent.push('');
 
     const contentMap = new Map<string, Set<string>>();
-    
+
     for (const section of sections) {
       const lines = section.content.split('\n');
       let currentSubsection = 'main';
-      
+
       for (const line of lines) {
         if (line.startsWith('###')) {
           currentSubsection = line;
         }
-        
+
         if (!contentMap.has(currentSubsection)) {
           contentMap.set(currentSubsection, new Set());
         }
-        
+
         const normalizedLine = line.trim();
         if (normalizedLine && !normalizedLine.startsWith('*Combined from:')) {
           contentMap.get(currentSubsection)!.add(line);
@@ -234,7 +390,31 @@ export class ConfigMerger {
     return mergedContent.join('\n');
   }
 
-  private addMetadata(output: string[], configs: Array<{ metadata: ConfigMetadata }>) {
+  private createEmptyConfiguration(): string {
+    const output: string[] = [];
+    output.push('# Composed Claude Code Configuration');
+    output.push('');
+    output.push('This configuration combines: (no configurations provided)');
+    output.push('');
+    output.push('---');
+    output.push('');
+    output.push('## No Configurations Available');
+    output.push('');
+    output.push('No configurations were provided for merging. Please specify at least one configuration.');
+    output.push('');
+    output.push('---');
+    output.push('');
+    output.push('## Configuration Metadata');
+    output.push('');
+    output.push('### Generation Details');
+    output.push('');
+    output.push(`- Generated: ${new Date().toISOString()}`);
+    output.push(`- Generator: Claude Config Composer v1.0.0`);
+    output.push('');
+    return output.join('\n');
+  }
+
+  private addMetadata(output: string[], configs: Array<{ metadata: ConfigMetadata; dependencies?: any }>) {
     output.push('');
     output.push('---');
     output.push('');
@@ -242,11 +422,60 @@ export class ConfigMerger {
     output.push('');
     output.push('### Included Configurations');
     output.push('');
-    
+
     for (const { metadata } of configs) {
       output.push(`- **${metadata.name}** v${metadata.version}: ${metadata.description}`);
     }
-    
+
+    // Add dependency information if available
+    const configsWithDeps = configs.filter(c => c.dependencies);
+    if (configsWithDeps.length > 0) {
+      output.push('');
+      output.push('### Dependencies');
+      output.push('');
+      
+      // Collect all unique dependencies
+      const allPeerDeps = new Map<string, Set<string>>();
+      const allEngines = new Map<string, Set<string>>();
+      
+      for (const { metadata, dependencies } of configsWithDeps) {
+        if (dependencies?.peerDependencies) {
+          for (const [pkg, version] of Object.entries(dependencies.peerDependencies)) {
+            if (!allPeerDeps.has(pkg)) allPeerDeps.set(pkg, new Set());
+            allPeerDeps.get(pkg)!.add(version as string);
+          }
+        }
+        if (dependencies?.engines) {
+          for (const [engine, version] of Object.entries(dependencies.engines)) {
+            if (!allEngines.has(engine)) allEngines.set(engine, new Set());
+            allEngines.get(engine)!.add(version as string);
+          }
+        }
+      }
+      
+      if (allEngines.size > 0) {
+        output.push('#### Required Engines');
+        output.push('');
+        for (const [engine, versions] of allEngines) {
+          const versionList = Array.from(versions).join(', ');
+          output.push(`- **${engine}**: ${versionList}`);
+        }
+        output.push('');
+      }
+      
+      if (allPeerDeps.size > 0) {
+        output.push('#### Peer Dependencies');
+        output.push('');
+        output.push('These packages should be installed in your project:');
+        output.push('');
+        for (const [pkg, versions] of allPeerDeps) {
+          const versionList = Array.from(versions).join(' or ');
+          output.push(`- **${pkg}**: ${versionList}`);
+        }
+        output.push('');
+      }
+    }
+
     output.push('');
     output.push('### Generation Details');
     output.push('');
@@ -255,7 +484,11 @@ export class ConfigMerger {
     output.push('');
     output.push('### Compatibility Notes');
     output.push('');
-    output.push('This is a composed configuration. Some features may require additional setup or conflict resolution.');
-    output.push('Review the combined configuration carefully and adjust as needed for your specific project.');
+    output.push(
+      'This is a composed configuration. Some features may require additional setup or conflict resolution.'
+    );
+    output.push(
+      'Review the combined configuration carefully and adjust as needed for your specific project.'
+    );
   }
 }
