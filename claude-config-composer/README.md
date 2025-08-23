@@ -1,14 +1,35 @@
-# Claude Config Composer (Beta v1.0.0-beta.1)
+# Claude Config Composer v1.0.0
 
 Generate custom Claude Code configurations for your exact tech stack.
 
-🚧 **Beta Release:** v1.0.0-beta.1 - Production-ready but not yet on NPM. Use local installation method below.
-📦 **NPM Package:** Coming in v1.0.0 with `npx` support!
+🎉 **Production Ready:** v1.0.0 - Full test coverage with 124 passing tests
+📦 **NPM Package:** Available with `npm install -g claude-config-composer` or use `npx`
 
-## 🚀 Quick Start (Current - Local Installation)
+## 🚀 Quick Start
+
+### NPX (Recommended - No Installation Required)
 
 ```bash
-# One-time setup
+# In your project directory
+npx claude-config-composer nextjs-15 shadcn
+# Your .claude/ directory is created instantly
+```
+
+### Global Installation
+
+```bash
+# Install globally
+npm install -g claude-config-composer
+
+# Use anywhere
+cd /path/to/your/project
+claude-compose nextjs-15 shadcn
+```
+
+### Local Development
+
+```bash
+# Clone for development
 git clone https://github.com/Matt-Dionis/claude-code-configs.git
 cd claude-code-configs/claude-config-composer
 npm install && npm run build
@@ -18,78 +39,78 @@ cd /path/to/your/project
 node /path/to/claude-code-configs/claude-config-composer/dist/cli.js nextjs-15 shadcn
 ```
 
-## 🔜 Coming Soon: Zero Installation with NPX
-
-Once published to npm, you'll be able to run without any installation:
-
-```bash
-# In your project directory
-npx claude-config-composer nextjs-15 shadcn
-# Your .claude/ directory is created instantly
-```
-
 ## Common Stacks
 
 ```bash
-# Using the local installation path from above:
-COMPOSER=/path/to/claude-code-configs/claude-config-composer/dist/cli.js
-
 # Next.js + shadcn/ui
-node $COMPOSER nextjs-15 shadcn
+npx claude-config-composer nextjs-15 shadcn
 
-# Full-stack Next.js
-node $COMPOSER nextjs-15 shadcn prisma trpc typescript
+# Full-stack Next.js with database
+npx claude-config-composer nextjs-15 shadcn drizzle tailwindcss
 
-# React + shadcn/ui
-node $COMPOSER react-19 shadcn tanstack typescript
+# Next.js with AI capabilities
+npx claude-config-composer nextjs-15 vercel-ai-sdk
+
+# Next.js with MCP server
+npx claude-config-composer nextjs-15 memory-mcp-server
 ```
 
 ## Features
 
-✅ **Zero installation** - Will use npx once published, leaving no trace
+✅ **Zero installation** - Use npx without installing anything
 ✅ **Intelligent merging** - Combines configs without duplication
 ✅ **Automatic backups** - Preserves existing .claude/ configs
 ✅ **Git-friendly** - Auto-adds to .gitignore
-✅ **Production ready** - Generated configs work immediately
-✅ **Conflict detection** - Warns about incompatible configurations
-✅ **Dependency resolution** - Automatically suggests required dependencies
+✅ **Production ready** - 124 tests ensure reliability
+✅ **TypeScript** - Full type safety throughout
+✅ **Smart conflict resolution** - Handles overlapping configurations gracefully
 
 ## Advanced Usage
 
 ### Interactive Mode
+
 ```bash
 # Opens interactive selection UI
-node /path/to/claude-config-composer/dist/cli.js
+npx claude-config-composer
 ```
 
 ### List Available Configs
+
 ```bash
-node /path/to/claude-config-composer/dist/cli.js list
+npx claude-config-composer list
 ```
 
-### Custom Output Directory
+### Dry Run (Preview without creating files)
+
 ```bash
-node /path/to/claude-config-composer/dist/cli.js nextjs-15 shadcn --output .claude-custom
+npx claude-config-composer nextjs-15 shadcn --dry-run
+```
+
+### Validate Configuration
+
+```bash
+npx claude-config-composer validate
 ```
 
 ### Skip Backup/Gitignore
+
 ```bash
-node /path/to/claude-config-composer/dist/cli.js nextjs-15 shadcn --no-backup --no-gitignore
+npx claude-config-composer nextjs-15 shadcn --no-backup --no-gitignore
 ```
 
 ## What Gets Generated
 
 ```
-.claude/
+your-project/
 ├── CLAUDE.md           # Combined documentation
-├── .claude/
-│   ├── settings.json   # Merged settings
-│   ├── agents/         # Framework-specific agents
-│   ├── commands/       # Custom commands
-│   └── hooks/          # Development hooks
-├── README.md
-└── package.json
+└── .claude/
+    ├── settings.json   # Merged settings
+    ├── agents/         # Framework-specific agents
+    ├── commands/       # Custom commands
+    └── hooks/          # Development hooks
 ```
+
+**Note:** No README.md or package.json files are generated - only Claude Code configuration files.
 
 ---
 
@@ -116,26 +137,36 @@ npm run dev nextjs-15 shadcn
 
 ### Frameworks
 
-- **Next.js 15**: App Router, React 19, Server Components
-- **React 19**: Latest React with Server Components
+- **nextjs-15**: Next.js 15 with App Router, React 19, Server Components
 
 ### UI/Styling
 
-- **shadcn/ui**: Radix UI + Tailwind components
-- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn**: shadcn/ui with Radix UI + Tailwind components
+- **tailwindcss**: Tailwind CSS utility-first framework
 
 ### Tooling
 
-- **TypeScript**: Type-safe development
-- **TanStack**: Query, Table, Router, Form
+- **vercel-ai-sdk**: Vercel AI SDK for building AI applications
 
-### Database
+### Databases
 
-- **Prisma**: Modern ORM for Node.js
+- **drizzle**: Drizzle ORM for TypeScript
 
-### API
+### MCP Servers
 
-- **tRPC**: End-to-end typesafe APIs
+- **memory-mcp-server**: Memory/knowledge management MCP server
+- **token-gated-mcp-server**: Token-gated access MCP server
+- **simple-mcp-server**: Basic MCP server template
+
+## Test Coverage & CI
+
+The project has comprehensive test coverage with 124 passing tests:
+
+- ✅ **Unit Tests**: Core functionality testing
+- ✅ **Integration Tests**: End-to-end CLI testing  
+- ✅ **Config Validation**: All configurations verified
+- ✅ **TypeScript**: Full type checking with no errors
+- ✅ **CI/CD**: GitHub Actions on Node 18.x and 20.x
 
 ## How It Works
 

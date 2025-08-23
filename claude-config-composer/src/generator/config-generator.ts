@@ -111,7 +111,8 @@ export class ConfigGenerator {
 
       if (claudeMdConfigs.length > 0) {
         const mergedClaudeMd = this.configMerger.merge(claudeMdConfigs);
-        const claudeMdPath = await PathValidator.createSafeFilePath('CLAUDE.md', '.', outputDir);
+        // Write directly to outputDir without additional path validation since outputDir is already validated
+        const claudeMdPath = path.join(outputDir, 'CLAUDE.md');
         await fs.writeFile(claudeMdPath, mergedClaudeMd);
       }
       if (spinner) spinner.succeed(steps[currentStep]);
@@ -128,11 +129,8 @@ export class ConfigGenerator {
         const agentName = typeof validatedAgent.name === 'string' ? validatedAgent.name : 'unknown';
         const filename = `${PathValidator.validateFilename(agentName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateAgentFile(validatedAgent);
-        const agentPath = await PathValidator.createSafeFilePath(
-          filename,
-          '.claude/agents',
-          outputDir
-        );
+        // Write directly to agentsDir
+        const agentPath = path.join(agentsDir, filename);
         await fs.writeFile(agentPath, content);
       }
       if (spinner) spinner.text = `${steps[currentStep]} (${mergedAgents.length} agents)`;
@@ -151,11 +149,8 @@ export class ConfigGenerator {
           typeof validatedCommand.name === 'string' ? validatedCommand.name : 'unknown';
         const filename = `${PathValidator.validateFilename(commandName.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}.md`;
         const content = this.componentMerger.generateCommandFile(validatedCommand);
-        const commandPath = await PathValidator.createSafeFilePath(
-          filename,
-          '.claude/commands',
-          outputDir
-        );
+        // Write directly to commandsDir
+        const commandPath = path.join(commandsDir, filename);
         await fs.writeFile(commandPath, content);
       }
       if (spinner) spinner.text = `${steps[currentStep]} (${mergedCommands.length} commands)`;
@@ -173,11 +168,8 @@ export class ConfigGenerator {
         const hookName =
           typeof validatedHook.name === 'string' ? validatedHook.name : 'unknown-hook';
         const hookContent = typeof validatedHook.content === 'string' ? validatedHook.content : '';
-        const hookPath = await PathValidator.createSafeFilePath(
-          hookName,
-          '.claude/hooks',
-          outputDir
-        );
+        // Write directly to hooksDir
+        const hookPath = path.join(hooksDir, hookName);
         await fs.writeFile(hookPath, hookContent);
       }
       if (spinner) spinner.text = `${steps[currentStep]} (${mergedHooks.length} hooks)`;

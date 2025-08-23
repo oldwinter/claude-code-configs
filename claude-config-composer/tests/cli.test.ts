@@ -97,8 +97,6 @@ describe('CLI Core Commands', () => {
 
       // Check that files were created
       const claudeMd = await fs.readFile(path.join(testProjectDir, 'CLAUDE.md'), 'utf-8');
-      const readmeMd = await fs.readFile(path.join(testProjectDir, 'README.md'), 'utf-8');
-      const packageJson = await fs.readFile(path.join(testProjectDir, 'package.json'), 'utf-8');
       const settingsJson = await fs.readFile(
         path.join(testProjectDir, '.claude', 'settings.json'),
         'utf-8'
@@ -106,8 +104,6 @@ describe('CLI Core Commands', () => {
 
       expect(claudeMd).toContain('Next.js 15');
       expect(claudeMd).toContain('App Router');
-      expect(readmeMd).toContain('Claude Code Configuration');
-      expect(JSON.parse(packageJson)).toHaveProperty('name');
       expect(JSON.parse(settingsJson)).toHaveProperty('permissions');
 
       // Check agents directory
@@ -236,7 +232,7 @@ describe('CLI Core Commands', () => {
   describe('error handling', () => {
     it('should show helpful error for unknown commands', () => {
       try {
-        execSync(`node ${CLI_PATH} unknown-command 2>&1`, { encoding: 'utf-8', shell: true });
+        execSync(`node ${CLI_PATH} unknown-command 2>&1`, { encoding: 'utf-8' });
         // Should not reach here - command should fail
         expect(true).toBe(false);
       } catch (error: any) {

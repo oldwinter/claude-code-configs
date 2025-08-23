@@ -9,7 +9,7 @@
 
 > **Production-ready Claude Code configurations for popular frameworks and tools**
 
-🎉 **Version 1.0.0** - Production-ready with comprehensive testing and 126+ passing tests
+🎉 **Version 1.0.0** - Production-ready with comprehensive testing and 124 passing tests
 📦 **NPM Package** - Install with `npm install -g claude-config-composer` or use `npx`
 
 ## 🚨 **Breaking Changes for Existing Users**
@@ -23,14 +23,15 @@
 
 ## 🎯 Key Features
 
-- ✅ **126+ Passing Tests** - Comprehensive test coverage
-- ✅ **7 Production Configurations** - Frameworks, UI libraries, databases, and tools
+- ✅ **124 Passing Tests** - Comprehensive test coverage
+- ✅ **8+ Production Configurations** - Frameworks, UI libraries, databases, MCP servers, and tools
 - ✅ **Intelligent Merging** - Combine multiple configs without conflicts
 - ✅ **Zero Dependencies** (runtime) - Lightweight and fast
 - ✅ **TypeScript** - Full type safety and modern development
 - ✅ **Git Integration** - Automatic .gitignore updates and backups
 
 ### Report Issues
+
 Found a bug? Please report it at [GitHub Issues](https://github.com/Matt-Dionis/claude-code-configs/issues)
 
 ## 🎯 Two Ways to Use This Repository
@@ -91,25 +92,31 @@ cp configurations/frameworks/nextjs-15/CLAUDE.md your-project/
 **Available configurations:**
 
 **Frameworks:**
+
 - `nextjs-15` - Next.js 15 with App Router and React 19
 
 **UI & Styling:**
+
 - `shadcn` - shadcn/ui component library with Radix UI
 - `tailwindcss` - Utility-first CSS framework with responsive design
 
 **Databases:**
+
 - `drizzle` - Type-safe ORM with schema management and migrations
 
 **Development Tools:**
+
 - `vercel-ai-sdk` - Streaming AI applications with function calling
 
 **MCP Servers (Complete Solutions):**
+
 - `memory-mcp-server` - MCP server with vector search and persistence
 - `token-gated-mcp-server` - Token-gated MCP server using the [Radius MCP SDK](https://github.com/radiustechsystems/mcp-sdk)
 
 ## 📸 What Gets Generated - Before & After Example
 
 ### Before: Empty Project Directory
+
 ```
 your-nextjs-project/
 ├── app/
@@ -119,14 +126,15 @@ your-nextjs-project/
 ```
 
 ### After: Running `npx claude-config-composer nextjs-15 shadcn tailwindcss`
+
 ```
 your-nextjs-project/
 ├── app/
 ├── components/
 ├── package.json
 ├── next.config.js
+├── CLAUDE.md                   # ✨ Combined best practices from all configs
 └── .claude/                    # ✨ Generated configuration
-    ├── CLAUDE.md               # Combined best practices from all configs
     ├── agents/
     │   ├── nextjs-app-router.md         # Next.js routing expertise
     │   ├── component-builder.md         # shadcn component patterns
@@ -141,12 +149,11 @@ your-nextjs-project/
     │   ├── format-code.sh               # Auto-format on save
     │   ├── validate-components.sh       # Component validation
     │   └── optimize-imports.sh          # Import optimization
-    ├── settings.json                    # Merged permissions & env vars
-    ├── README.md                        # Setup instructions
-    └── package.json                     # Dependencies tracking
+    └── settings.json                    # Merged permissions & env vars
 ```
 
-### 🎯 Key Benefits of Generated Config:
+### 🎯 Key Benefits of Generated Config
+
 - **40+ specialized agents** covering Next.js, shadcn, and Tailwind expertise
 - **Intelligent permission controls** tailored to your stack
 - **Automated workflows** via hooks for formatting, validation, and optimization
