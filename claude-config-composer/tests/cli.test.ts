@@ -185,6 +185,9 @@ describe('CLI Core Commands', () => {
         encoding: 'utf-8',
       });
 
+      // Add delay for CI file system sync
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Then validate it
       const output = execSync(`node ${CLI_PATH} validate ${testProjectDir}`, { encoding: 'utf-8' });
 
