@@ -33,20 +33,14 @@ export class ConfigGenerator {
   ): Promise<void> {
     // Handle output directory path
     // For absolute paths (like temp directories in tests), use directly
-    // For relative paths, validate and resolve
-    try {
-      if (path.isAbsolute(outputDir)) {
-        // For absolute paths (e.g., temp directories in CI), use as-is
-        outputDir = path.normalize(outputDir);
-      } else {
-        // For relative paths, validate and resolve
-        const sanitizedOutputDir = PathValidator.sanitizePath(outputDir);
-        outputDir = path.resolve(sanitizedOutputDir);
-      }
-    } catch (error) {
-      throw new Error(
-        `Invalid output directory: ${error instanceof PathValidationError ? error.message : 'Unknown error'}`
-      );
+    // For relative paths, just resolve them
+    if (path.isAbsolute(outputDir)) {
+      // For absolute paths (e.g., temp directories in CI), use as-is
+      outputDir = path.normalize(outputDir);
+    } else {
+      // For relative paths, resolve from current directory
+      // Don't use sanitizePath here as it rejects valid paths
+      outputDir = path.resolve(process.cwd(), outputDir || '.');
     }
 
     // Validate input configurations
